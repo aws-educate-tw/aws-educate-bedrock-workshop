@@ -2,32 +2,135 @@
 # SPDX-License-Identifier: MIT-0
 
 openapi: "3.0.1"
+
 info:
-  title: "bedrock-lambda-api"
+  title: "life-simulation-game-api"
+  description: |
+    Session-based life simulation game API powered by Large Language Models (LLMs).
+    All requests are forwarded to a single Lambda function, where routing and game logic
+    are handled internally.
   version: "1.0.0"
+
 paths:
-  /ask:
+  /generate-background:
     post:
+      summary: "Initialize a new life simulation session"
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                message:
+                model_id:
                   type: string
-                  description: "The message to send to the Bedrock model"
+                  description: "LLM model ID to use for this session"
               required:
-                - message
+                - model_id
       responses:
         "200":
-          description: "Response from Bedrock model"
+          description: "Initial game background and session ID"
           content:
             application/json:
               schema:
                 type: object
+
       x-amazon-apigateway-integration:
         uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations"
-        httpMethod: "POST"
-        type: "aws_proxy"
+          Fn::Sub: >
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+
+  /generate-story:
+    post:
+      summary: "Generate a life event based on current session state"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+              required:
+                - session_id
+      responses:
+        "200":
+          description: "Generated life event and available options"
+          content:
+            application/json:
+              schema:
+                type: object
+
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+
+  /resolve-event:
+    post:
+      summary: "Resolve a life event and update player state"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                event:
+                  type: object
+                selected_option_id:
+                  type: string
+              required:
+                - session_id
+                - event
+                - selected_option_id
+      responses:
+        "200":
+          description: "Updated player state and life summary"
+          content:
+            application/json:
+              schema:
+                type: object
+
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+
+  /generate-result:
+    post:
+      summary: "Generate final life outcome and radar scores"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+              required:
+                - session_id
+      responses:
+        "200":
+          description: "Final life summary and radar chart scores"
+          content:
+            application/json:
+              schema:
+                type: object
+
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
