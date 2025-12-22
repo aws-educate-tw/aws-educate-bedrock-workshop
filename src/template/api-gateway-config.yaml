@@ -3,7 +3,7 @@
 
 openapi: "3.0.1"
 info:
-  title: "bedrock-streaming-lambda-api"
+  title: "bedrock-lambda-api"
   version: "1.0.0"
 paths:
   /ask:
@@ -21,14 +21,13 @@ paths:
                 - message
       responses:
         "200":
-          description: "Streaming response from Bedrock model"
+          description: "Response from Bedrock model"
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
+                type: object
       x-amazon-apigateway-integration:
         uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2021-11-15/functions/${StreamingResponseFunction.Arn}/response-streaming-invocations"
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations"
         httpMethod: "POST"
-        responseTransferMode: "STREAM"
         type: "aws_proxy"

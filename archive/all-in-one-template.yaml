@@ -3,7 +3,7 @@
 
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: SAM Template for Lambda Streaming Response with Bedrock Model Integration
+Description: SAM Template for Lambda Response with Bedrock Model Integration
 
 Resources:
   # CloudWatch Log Group for API Gateway Access Logs
@@ -33,7 +33,7 @@ Resources:
     Properties:
       CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchRole.Arn
 
-  BedrockStreamingApi:
+  BedrockApi:
     Type: AWS::Serverless::Api
     DependsOn: ApiGatewayAccount
     Properties:
@@ -52,7 +52,7 @@ Resources:
       DefinitionBody:
         openapi: "3.0.1"
         info:
-          title: "bedrock-streaming-lambda-api"
+          title: "bedrock-lambda-api"
           version: "1.0.0"
         paths:
           /ask:
@@ -70,16 +70,15 @@ Resources:
                         - message
               responses:
                 "200":
-                  description: "Streaming response from Bedrock model"
+                  description: "Response from Bedrock model"
                   content:
-                    text/plain:
+                    application/json:
                       schema:
-                        type: string
+                        type: object
               x-amazon-apigateway-integration:
                 uri:
-                  Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2021-11-15/functions/${StreamingResponseFunction.Arn}/response-streaming-invocations"
+                  Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations"
                 httpMethod: "POST"
-                responseTransferMode: "STREAM"
                 type: "aws_proxy"
 
   StreamingResponseFunction:
@@ -102,12 +101,10 @@ Resources:
             - Effect: Allow
               Action:
                 - bedrock:InvokeModel
-                - bedrock:InvokeModelWithResponseStream
               Resource: "*"
             - Effect: Allow
               Action:
                 - bedrock-runtime:InvokeModel
-                - bedrock-runtime:InvokeModelWithResponseStream
               Resource: "*"
 
   ApiGatewayInvokePermission:
@@ -116,9 +113,9 @@ Resources:
       FunctionName: !Ref StreamingResponseFunction
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BedrockStreamingApi}/*/*"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BedrockApi}/*/*"
 
 Outputs:
   BedrockStreamingApiUrl:
-    Description: "API Gateway endpoint URL for Bedrock streaming"
-    Value: !Sub "https://${BedrockStreamingApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/ask"
+    Description: "API Gateway endpoint URL for Bedrock"
+    Value: !Sub "https://${BedrockApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/ask"
