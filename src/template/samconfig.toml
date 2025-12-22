@@ -1,0 +1,15 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "streaming-demo"
+resolve_s3 = true
+s3_prefix = "streaming-demo"
+region = "us-east-1"
+profile = "tf-demo"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+image_repositories = []
+
+[default.global.parameters]
+region = "us-east-1"
