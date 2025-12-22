@@ -223,3 +223,53 @@
 > API 採用標準 Request / Response 模式，
 > 以降低學習門檻並提升實作與除錯效率，
 > 同時保留未來延伸為即時互動或串流回傳的彈性。
+
+---
+
+# 五、SAM Local 測試指令
+
+前置需求：已安裝 Docker 並啟動。
+
+## 1) 安裝依賴與建置
+
+```bash
+sam build -t src/template/template.yaml
+```
+
+## 2) 啟動本機 API
+
+```bash
+sam local start-api -t src/template/template.yaml
+```
+
+## 3) 呼叫 API（範例）
+
+```bash
+curl -X POST http://127.0.0.1:3000/generate-background \
+  -H "Content-Type: application/json" \
+  -d '{"model_id":"us.amazon.nova-lite-v1:0"}'
+```
+
+```bash
+curl -X POST http://127.0.0.1:3000/generate-story \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"session_abc123"}'
+```
+
+```bash
+curl -X POST http://127.0.0.1:3000/resolve-event \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"session_abc123","event":{},"selected_option_id":"A"}'
+```
+
+```bash
+curl -X POST http://127.0.0.1:3000/generate-result \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"session_abc123"}'
+```
+
+如果遇到 Docker 拉不到映像檔，可以先拉基底映像：
+
+```bash
+docker pull public.ecr.aws/lambda/nodejs:18-arm64
+```
