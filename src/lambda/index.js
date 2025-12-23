@@ -1,5 +1,5 @@
-import { DynamoDBClient, PutItemCommand, GetItemCommand } from "@aws-sdk/client-dynamodb";
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
+const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-bedrock-runtime");
 
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || "us-east-1" });
 const tableName = process.env.DDB_TABLE_NAME;
@@ -51,7 +51,7 @@ const toAttr = (value) => {
     return { S: String(value) };
 };
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   const rawPath = event.path || "";
   const path = rawPath.replace(/\/+$/, ""); 
 
