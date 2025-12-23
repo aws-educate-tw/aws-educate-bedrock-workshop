@@ -35,13 +35,6 @@ paths:
               schema:
                 type: object
 
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-
   /generate-story:
     post:
       summary: "Generate a life event based on current session state"
@@ -63,13 +56,6 @@ paths:
             application/json:
               schema:
                 type: object
-
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
 
   /resolve-event:
     post:
@@ -99,13 +85,6 @@ paths:
               schema:
                 type: object
 
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-
   /generate-result:
     post:
       summary: "Generate final life outcome and radar scores"
@@ -128,9 +107,24 @@ paths:
               schema:
                 type: object
 
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StreamingResponseFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
+  /db-test:
+    post:
+      summary: "Write and read a test item in DynamoDB"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                payload:
+                  type: string
+      responses:
+        "200":
+          description: "DynamoDB write/read result"
+          content:
+            application/json:
+              schema:
+                type: object
