@@ -64,7 +64,7 @@ Resources:
       Environment:
         Variables:
           BEDROCK_REGION: !Ref AWS::Region
-          DDB_TABLE_NAME: !Ref GameSessionsTable
+          DDB_TABLE_NAME: GameSessions
       Policies:
         - AWSLambdaBasicExecutionRole
         - DynamoDBCrudPolicy:
@@ -109,6 +109,12 @@ Resources:
           Properties:
             Path: /db-test
             Method: post
+            RestApiId: !Ref ApiGW
+        DbHealth:
+          Type: Api
+          Properties:
+            Path: /db-health
+            Method: get
             RestApiId: !Ref ApiGW
 
   GameSessionsTable:
