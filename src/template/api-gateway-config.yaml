@@ -71,12 +71,12 @@ paths:
                   type: string
                 event:
                   type: object
-                selected_option_id:
+                selected_option:
                   type: string
               required:
                 - session_id
                 - event
-                - selected_option_id
+                - selected_option
       responses:
         "200":
           description: "Updated player state and life summary"
@@ -124,6 +124,28 @@ paths:
       responses:
         "200":
           description: "DynamoDB write/read result"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /db-health:
+    get:
+      summary: "Check DynamoDB read access"
+      responses:
+        "200":
+          description: "DynamoDB read access status"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /lambda-health:
+    get:
+      summary: "Check Lambda health"
+      responses:
+        "200":
+          description: "Lambda health status"
           content:
             application/json:
               schema:
