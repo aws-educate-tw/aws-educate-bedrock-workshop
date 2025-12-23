@@ -424,3 +424,32 @@ curl -X POST http://127.0.0.1:3000/generate-result \
 ```bash
 docker pull public.ecr.aws/lambda/nodejs:18-arm64
 ```
+
+---
+
+# 六、部署到 AWS
+
+前置需求：已設定 AWS CLI/認證與 SAM CLI。
+
+## 1) 建置
+
+```bash
+sam build -t src/template/template.yaml
+```
+
+## 2) 部署
+
+```bash
+sam deploy --guided
+```
+
+## 3) 取得 API URL
+
+部署完成後，在 CloudFormation Outputs 取得 `ApiBaseUrl`，
+或用以下指令查詢：
+
+```bash
+aws cloudformation describe-stacks \
+  --stack-name bedrock-workshop-stack \
+  --query "Stacks[0].Outputs"
+```
