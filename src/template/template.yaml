@@ -104,11 +104,17 @@ Resources:
             Path: /generate-result
             Method: post
             RestApiId: !Ref ApiGW
-        DbTest:
+        DbHealth:
           Type: Api
           Properties:
-            Path: /db-test
-            Method: post
+            Path: /db-health
+            Method: get
+            RestApiId: !Ref ApiGW
+        LambdaHealth:
+          Type: Api
+          Properties:
+            Path: /lambda-health
+            Method: get
             RestApiId: !Ref ApiGW
 
   GameSessionsTable:
