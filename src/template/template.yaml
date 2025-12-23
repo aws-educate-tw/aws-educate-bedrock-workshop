@@ -6,6 +6,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: SAM Template for Lambda Response with Bedrock Model Integration
 
+Parameters:
+  KnowledgeBaseId:
+    Type: String
+    Default: ""
+    Description: Bedrock Knowledge Base ID (optional)
+
 Resources:
   # CloudWatch Log Group for API Gateway Access Logs
   ApiGatewayAccessLogs:
@@ -65,6 +71,7 @@ Resources:
         Variables:
           BEDROCK_REGION: !Ref AWS::Region
           DDB_TABLE_NAME: !Ref GameSessionsTable
+          KNOWLEDGE_BASE_ID: !Ref KnowledgeBaseId
       Policies:
         - AWSLambdaBasicExecutionRole
         - DynamoDBCrudPolicy:
@@ -79,6 +86,10 @@ Resources:
               Action:
                 - bedrock-runtime:InvokeModel
               Resource: "*"
+            - Effect: Allow
+              Action:
+                - bedrock:Retrieve
+              Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*"
       Events:
         GenerateBackground:
           Type: Api

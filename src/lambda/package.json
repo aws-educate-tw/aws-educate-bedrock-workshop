@@ -1,7 +1,7 @@
 {
   "name": "lambda-streaming-response",
   "version": "1.0.0",
-  "description": "AWS Lambda function that streams responses",
+  "description": "AWS Lambda function for life simulation game",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -10,13 +10,16 @@
   "keywords": [
     "aws",
     "lambda",
-    "streaming"
+    "bedrock",
+    "langchain"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.485.0",
     "@aws-sdk/client-dynamodb": "^3.485.0",
-    "@aws-sdk/client-bedrock-runtime": "^3.485.0",
-    "aws-lambda": "^1.0.7"
+    "@langchain/aws": "^0.1.0",
+    "@langchain/core": "^0.3.0",
+    "zod": "^3.23.0"
   }
 }
