@@ -496,12 +496,159 @@ export const handler = async (event) => {
     }
 
 
-    case "/generate-result":
-    //   return handleGenerateResult(body);
+    case "/generate-result": {
+        if (method !== "POST") {
+            return {
+                statusCode: 405,
+                body: JSON.stringify({ message: "Method Not Allowed" })
+            };
+        }
+
+        if (!body.session_id) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ message: "session_id is required" })
+            };
+        }
+
+        if (!tableName) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ message: "Missing DDB_TABLE_NAME" })
+            };
+        }
+
+        let sessionItem;
+        try {
+            const read = await dynamoClient.send(
+                new GetItemCommand({
+                    TableName: tableName,
+                    Key: {
+                        session_id: { S: body.session_id }
+                    }
+                })
+            );
+            sessionItem = read.Item;
+        } catch (error) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ message: "Failed to read session", error: error.message })
+            };
+        }
+
+        if (!sessionItem) {
+            return {
+                statusCode: 404,
+                body: JSON.stringify({ message: "Session not found" })
+            };
+        }
+
+        const modelId = getAttrString(sessionItem.model_id) || defaultModelId;
+        const currentSummary = getAttrString(sessionItem.current_summary);
+        const lifeGoal = getAttrString(sessionItem.life_goal);
+        const playerState = fromAttr(sessionItem.player_state) || {};
+        const history = fromAttr(sessionItem.history) || [];
+
+        const prompt = [
+            "你是人生模擬遊戲的結局生成器。",
+            "請根據玩家最終狀態與歷史，產生結局摘要與雷達圖評分。",
+            "輸出 JSON，欄位必須包含：",
+            "summary（String）, radar_scores（Object，含 financial, career, health, relationships, self_fulfillment，0-100）, ending_type（String）。",
+            "只輸出 JSON，不要額外文字。",
+            "",
+            "玩家摘要：",
+            currentSummary,
+            "玩家目標：",
+            lifeGoal,
+            "玩家狀態：",
+            JSON.stringify(playerState),
+            "歷史事件：",
+            JSON.stringify(history)
+        ].join("\n");
+
+        let resultPayload;
+        try {
+            const requestBody = {
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                text: prompt
+                            }
+                        ]
+                    }
+                ],
+                inferenceConfig: {
+                    max_new_tokens: 800,
+                    temperature: 0.7
+                }
+            };
+
+            const response = await bedrockClient.send(
+                new InvokeModelCommand({
+                    modelId,
+                    contentType: "application/json",
+                    accept: "application/json",
+                    body: JSON.stringify(requestBody)
+                })
+            );
+
+            const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+            const modelText =
+                responseBody?.output?.message?.content?.[0]?.text ??
+                responseBody?.content?.[0]?.text ??
+                "";
+            resultPayload = parseJsonFromModel(modelText);
+        } catch (error) {
+            return {
+                statusCode: 502,
+                body: JSON.stringify({ message: "Bedrock generation failed", error: error.message })
+            };
+        }
+
+        if (!resultPayload?.summary || !resultPayload?.radar_scores || !resultPayload?.ending_type) {
+            return {
+                statusCode: 502,
+                body: JSON.stringify({ message: "Invalid model response", raw: resultPayload })
+            };
+        }
+
+        const now = new Date();
+        const updatedSummary = resultPayload.summary;
+        const updatedFinalResult = {
+            summary: resultPayload.summary,
+            radar_scores: resultPayload.radar_scores,
+            ending_type: resultPayload.ending_type
+        };
+
+        await dynamoClient.send(
+            new PutItemCommand({
+                TableName: tableName,
+                Item: {
+                    session_id: { S: body.session_id },
+                    status: { S: "ended" },
+                    model_id: { S: modelId },
+                    world_context: toAttr(fromAttr(sessionItem.world_context) || {}),
+                    player_identity: toAttr(fromAttr(sessionItem.player_identity) || {}),
+                    life_goal: { S: lifeGoal },
+                    player_state: toAttr(playerState),
+                    current_summary: { S: updatedSummary },
+                    turn: toAttr(fromAttr(sessionItem.turn)),
+                    history: toAttr(history),
+                    final_result: toAttr(updatedFinalResult),
+                    created_at: { S: getAttrString(sessionItem.created_at) || now.toISOString() },
+                    updated_at: { S: now.toISOString() },
+                    ttl: { N: String(getAttrNumber(sessionItem.ttl) || Math.floor(now.getTime() / 1000) + 24 * 60 * 60) }
+                }
+            })
+        );
+
         return {
             statusCode: 200,
-            body: JSON.stringify({ message: "generate-result" })
+            body: JSON.stringify(updatedFinalResult)
         };
+    }
 
     
     default:
