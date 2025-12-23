@@ -650,59 +650,6 @@ exports.handler = async (event) => {
         };
     }
 
-    case "/db-test": {
-        if (method !== "POST") {
-            return {
-                statusCode: 405,
-                body: JSON.stringify({ message: "Method Not Allowed" })
-            };
-        }
-
-        if (!tableName) {
-            return {
-                statusCode: 500,
-                body: JSON.stringify({ message: "Missing DDB_TABLE_NAME" })
-            };
-        }
-
-        const sessionId = body.session_id || `session-${Date.now()}`;
-        const payload = body.payload || "ok";
-        const createdAt = new Date().toISOString();
-
-        await dynamoClient.send(
-            new PutItemCommand({
-                TableName: tableName,
-                Item: {
-                    session_id: { S: sessionId },
-                    payload: { S: payload },
-                    createdAt: { S: createdAt }
-                }
-            })
-        );
-
-        const read = await dynamoClient.send(
-            new GetItemCommand({
-                TableName: tableName,
-                Key: {
-                    session_id: { S: sessionId }
-                }
-            })
-        );
-
-        const item = read.Item
-            ? {
-                  session_id: read.Item.session_id?.S,
-                  payload: read.Item.payload?.S,
-                  createdAt: read.Item.createdAt?.S
-              }
-            : null;
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ session_id: sessionId, item })
-        };
-    }
-
     case "/db-health": {
         if (method !== "GET") {
             return {
