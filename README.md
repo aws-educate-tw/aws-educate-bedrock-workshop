@@ -459,13 +459,13 @@ docker pull public.ecr.aws/lambda/nodejs:18-arm64
 ## 1) 建置
 
 ```bash
-sam build -t src/template/template.yaml
+sam build -t src/template/template.yaml 
 ```
 
 ## 2) 部署
 
 ```bash
-sam deploy --guided
+sam deploy --guided  --parameter-overrides KnowledgeBaseId={your knowledge base id}
 ```
 
 ## 3) 取得 API URL
