@@ -19,6 +19,37 @@ const getAttrString = (attr) => attr?.S ?? "";
 const getAttrNumber = (attr) => (attr?.N ? Number(attr.N) : 0);
 const getAttrList = (attr) => (Array.isArray(attr?.L) ? attr.L : []);
 const getAttrMap = (attr) => (attr?.M ? attr.M : {});
+const fromAttr = (attr) => {
+    if (!attr) return null;
+    if (attr.S !== undefined) return attr.S;
+    if (attr.N !== undefined) return Number(attr.N);
+    if (attr.BOOL !== undefined) return attr.BOOL;
+    if (attr.NULL) return null;
+    if (attr.L) return attr.L.map(fromAttr);
+    if (attr.M) {
+        const obj = {};
+        for (const [key, value] of Object.entries(attr.M)) {
+            obj[key] = fromAttr(value);
+        }
+        return obj;
+    }
+    return null;
+};
+const toAttr = (value) => {
+    if (value === null || value === undefined) return { NULL: true };
+    if (typeof value === "string") return { S: value };
+    if (typeof value === "number") return { N: String(value) };
+    if (typeof value === "boolean") return { BOOL: value };
+    if (Array.isArray(value)) return { L: value.map(toAttr) };
+    if (typeof value === "object") {
+        const M = {};
+        for (const [key, entry] of Object.entries(value)) {
+            M[key] = toAttr(entry);
+        }
+        return { M };
+    }
+    return { S: String(value) };
+};
 
 export const handler = async (event) => {
   const rawPath = event.path || "";
@@ -298,12 +329,171 @@ export const handler = async (event) => {
             })
         };
     }
-    case "/resolve-event":
-    //   return handleResolveEvent(body);
+    case "/resolve-event": {
+        if (method !== "POST") {
+            return {
+                statusCode: 405,
+                body: JSON.stringify({ message: "Method Not Allowed" })
+            };
+        }
+
+        if (!body.session_id || !body.event || !body.selected_option) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ message: "session_id, event, and selected_option are required" })
+            };
+        }
+
+        if (!tableName) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ message: "Missing DDB_TABLE_NAME" })
+            };
+        }
+
+        let sessionItem;
+        try {
+            const read = await dynamoClient.send(
+                new GetItemCommand({
+                    TableName: tableName,
+                    Key: {
+                        session_id: { S: body.session_id }
+                    }
+                })
+            );
+            sessionItem = read.Item;
+        } catch (error) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ message: "Failed to read session", error: error.message })
+            };
+        }
+
+        if (!sessionItem) {
+            return {
+                statusCode: 404,
+                body: JSON.stringify({ message: "Session not found" })
+            };
+        }
+
+        const modelId = getAttrString(sessionItem.model_id) || defaultModelId;
+        const currentSummary = getAttrString(sessionItem.current_summary);
+        const lifeGoal = getAttrString(sessionItem.life_goal);
+        const playerState = fromAttr(sessionItem.player_state) || {};
+        const history = fromAttr(sessionItem.history) || [];
+
+        const prompt = [
+            "你是人生模擬遊戲的事件解析器。",
+            "請根據玩家狀態與事件選擇，輸出事件結果與更新後狀態。",
+            "輸出 JSON，欄位必須包含：",
+            "event_outcome（String）, updated_player_state（Object）, current_summary（String）。",
+            "只輸出 JSON，不要額外文字。",
+            "",
+            "玩家摘要：",
+            currentSummary,
+            "玩家目標：",
+            lifeGoal,
+            "玩家狀態：",
+            JSON.stringify(playerState),
+            "事件內容：",
+            JSON.stringify(body.event),
+            "玩家選擇：",
+            body.selected_option
+        ].join("\n");
+
+        let resolvePayload;
+        try {
+            const requestBody = {
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                text: prompt
+                            }
+                        ]
+                    }
+                ],
+                inferenceConfig: {
+                    max_new_tokens: 800,
+                    temperature: 0.7
+                }
+            };
+
+            const response = await bedrockClient.send(
+                new InvokeModelCommand({
+                    modelId,
+                    contentType: "application/json",
+                    accept: "application/json",
+                    body: JSON.stringify(requestBody)
+                })
+            );
+
+            const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+            const modelText =
+                responseBody?.output?.message?.content?.[0]?.text ??
+                responseBody?.content?.[0]?.text ??
+                "";
+            resolvePayload = parseJsonFromModel(modelText);
+        } catch (error) {
+            return {
+                statusCode: 502,
+                body: JSON.stringify({ message: "Bedrock generation failed", error: error.message })
+            };
+        }
+
+        if (!resolvePayload?.event_outcome || !resolvePayload?.updated_player_state || !resolvePayload?.current_summary) {
+            return {
+                statusCode: 502,
+                body: JSON.stringify({ message: "Invalid model response", raw: resolvePayload })
+            };
+        }
+
+        const now = new Date();
+        const historyItem = {
+            event_id: body.event.event_id || `event_${Date.now()}`,
+            event_description: body.event.event_description || "",
+            selected_option: body.selected_option,
+            outcome_summary: resolvePayload.event_outcome,
+            timestamp: now.toISOString()
+        };
+
+        const updatedHistory = history.concat(historyItem);
+        const updatedPlayerState = resolvePayload.updated_player_state || playerState;
+        const updatedSummary = resolvePayload.current_summary;
+        const updatedTurn = getAttrNumber(sessionItem.turn) + 1;
+
+        await dynamoClient.send(
+            new PutItemCommand({
+                TableName: tableName,
+                Item: {
+                    session_id: { S: body.session_id },
+                    status: { S: getAttrString(sessionItem.status) || "active" },
+                    model_id: { S: modelId },
+                    world_context: toAttr(fromAttr(sessionItem.world_context) || {}),
+                    player_identity: toAttr(fromAttr(sessionItem.player_identity) || {}),
+                    life_goal: { S: lifeGoal },
+                    player_state: toAttr(updatedPlayerState),
+                    current_summary: { S: updatedSummary },
+                    turn: { N: String(updatedTurn) },
+                    history: toAttr(updatedHistory),
+                    final_result: toAttr(fromAttr(sessionItem.final_result)),
+                    created_at: { S: getAttrString(sessionItem.created_at) || now.toISOString() },
+                    updated_at: { S: now.toISOString() },
+                    ttl: { N: String(getAttrNumber(sessionItem.ttl) || Math.floor(now.getTime() / 1000) + 24 * 60 * 60) }
+                }
+            })
+        );
+
         return {
             statusCode: 200,
-            body: JSON.stringify({ message: "resolve-event" })
+            body: JSON.stringify({
+                event_outcome: resolvePayload.event_outcome,
+                updated_player_state: updatedPlayerState,
+                current_summary: updatedSummary
+            })
         };
+    }
 
 
     case "/generate-result":
