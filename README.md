@@ -415,7 +415,7 @@ sam build -t src/template/template.yaml
 ## 2) 啟動本機 API
 
 ```bash
-sam local start-api -t src/template/template.yaml
+sam local start-api -t src/template/template.yaml --env-vars ./src/template/env.json
 ```
 
 ## 3) 呼叫 API（範例）
