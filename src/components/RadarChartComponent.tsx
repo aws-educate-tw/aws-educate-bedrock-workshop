@@ -16,9 +16,10 @@ interface RadarChartComponentProps {
     career: number;
     health: number;
   };
+  hideScale?: boolean;
 }
 
-export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }) => {
+export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data, hideScale = false }) => {
   // 轉換數據格式為 Recharts 需要的格式
   const chartData = [
     { subject: '智慧', value: data.wisdom },
@@ -30,21 +31,17 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }
 
   return (
     <div className="w-full h-64 relative">
-      {/* 魔法陣外圈裝飾 */}
-      <div className="absolute inset-0 rounded-full border border-[#ceb485]/20 animate-pulse" />
-      <div className="absolute inset-2 rounded-full border border-[#ceb485]/10" />
-      
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
           <PolarGrid 
-            stroke="#ceb485" 
+            stroke="var(--newspaper-dark)" 
             strokeWidth={1}
-            strokeOpacity={0.3}
+            strokeOpacity={0.4}
           />
           <PolarAngleAxis 
             dataKey="subject" 
             tick={{ 
-              fill: '#ceb485', 
+              fill: 'var(--newspaper-dark)', 
               fontSize: 12,
               fontWeight: 600,
               fontFamily: 'Crimson Text, serif'
@@ -53,8 +50,8 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }
           <PolarRadiusAxis
             angle={90}
             domain={[0, 100]}
-            tick={{ 
-              fill: '#5f4e42', 
+            tick={hideScale ? false : { 
+              fill: 'var(--newspaper-accent)', 
               fontSize: 10,
               fontFamily: 'Crimson Text, serif'
             }}
@@ -64,22 +61,22 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }
           <Radar
             name="能力值"
             dataKey="value"
-            stroke="#ceb485"
-            fill="#ceb485"
+            stroke="var(--newspaper-dark)"
+            fill="var(--newspaper-accent)"
             fillOpacity={0.2}
             strokeWidth={2}
             dot={{ 
-              fill: '#ceb485', 
+              fill: 'var(--newspaper-dark)', 
               strokeWidth: 2, 
-              stroke: '#5f4e42',
+              stroke: 'var(--newspaper-light)',
               r: 4 
             }}
           />
-          {/* 魔法光暈效果 */}
+          {/* 輔助線條 */}
           <Radar
-            name="光暈"
+            name="輔助線"
             dataKey="value"
-            stroke="#5f4e42"
+            stroke="var(--newspaper-accent)"
             fill="transparent"
             strokeWidth={1}
             strokeOpacity={0.6}

@@ -1,13 +1,36 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, TrendingUp, Target, Sparkles, Scroll, Crown } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useAppStore } from '../store';
+import { ChevronRight } from 'lucide-react';
+import { useAppStore, SummaryState } from '../store';
 import { RadarChartComponent } from '../components/RadarChartComponent';
 
 export const SummaryPage: React.FC = () => {
   const navigate = useNavigate();
   const { summaryState } = useAppStore();
+  const headerRef = useRef<HTMLElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    // 頁面載入時滾動到頂部
+    window.scrollTo(0, 0);
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    [headerRef.current, ...cardRefs.current].forEach(ref => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   if (!summaryState) {
     // 如果沒有 summaryState，使用預設資料
@@ -48,150 +71,70 @@ export const SummaryPage: React.FC = () => {
   const performance = getPerformanceLevel(summaryState.lifeScore);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#25344F] via-[#5f4e42] to-[#25344F] relative">
-      {/* 魔法背景裝飾 */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ceb485]/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#5f4e42]/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-[#632024]/10 rounded-full blur-3xl animate-pulse" />
-      </div>
-
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* 頁首區域 */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12 px-6"
-        >
-          <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ceb485]/10 border border-[#ceb485]/20 rounded-full text-[#ceb485] text-sm font-medium mb-6">
-              <Crown size={16} />
-              <span className="ancient-text">魔法人生模擬完成</span>
+    <div className="prophet-page" style={{ backgroundImage: 'url(https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/background_cznh7q.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+      <header className="text-center py-4 border-b-2 border-[var(--prophet-border)]">
+        <h1 className="prophet-title text-2xl mb-2">
+          {"THE DAILY PROPHET".split("").map((char, index) => (
+            <span key={index} className={`${char === 'A' ? 'text-[var(--prophet-accent)] inline-block' : ''}`} style={{ animation: char === 'A' ? 'bounce-a 3s infinite' : 'none' }}>
+              {char}
+            </span>
+          ))}
+        </h1>
+        <div className="prophet-dateline">
+          ★ 人生總結特刊 ★
+        </div>
+      </header>
+      <div className="p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="prophet-article">
+            <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
+              人生總結
+            </h2>
+            
+            <div className="prophet-text leading-relaxed space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
+              {summaryState.finalSummaryText.split('。').map((sentence, index) => (
+                sentence.trim() && (
+                  <p key={index} className="mb-4 text-justify">
+                    {sentence.trim()}。
+                  </p>
+                )
+              ))}
             </div>
             
-            <h1 className="text-5xl font-bold text-[#ceb485] mb-4 magic-text">
-              人生總結
-            </h1>
-            
-            <p className="text-xl text-[#e2e0d3]/80 max-w-2xl mx-auto leading-relaxed ancient-text">
-              魔法 AI 根據你的一生選擇所生成的總體回顧
-            </p>
+            <div className="mt-6 pt-4 border-t border-[var(--prophet-border)]">
+              <button
+                onClick={() => navigate('/achievement')}
+                className="w-full prophet-button py-3 px-6 flex items-center justify-center gap-3"
+              >
+                <span>查看完整人生成就報告</span>
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
-        </motion.div>
 
-        {/* 主要內容區 */}
-        <div className="flex-1 px-6 pb-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              {/* 左側總結卡片 (60%) */}
-              <motion.div 
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="lg:col-span-3"
-              >
-                <div className="parchment-card rounded-3xl shadow-2xl overflow-hidden">
-                  {/* 卡片標題 */}
-                  <div className="px-8 py-6 border-b border-[#ceb485]/20 bg-gradient-to-r from-[#25344F]/50 to-[#5f4e42]/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#ceb485]/20 rounded-xl flex items-center justify-center">
-                        <Scroll size={20} className="text-[#ceb485]" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-[#ceb485] magic-text">人生總結</h2>
-                        <p className="text-[#e2e0d3]/70 text-sm ancient-text">你的人生故事回顧</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* 總結內容 */}
-                  <div className="p-8">
-                    <div className="prose prose-lg prose-invert max-w-none">
-                      <div className="text-[#e2e0d3] leading-relaxed text-lg space-y-4 max-h-96 overflow-y-auto custom-scrollbar pr-4 ancient-text">
-                        {summaryState.finalSummaryText.split('。').map((sentence, index) => (
-                          sentence.trim() && (
-                            <motion.p 
-                              key={index}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.3 + index * 0.1 }}
-                              className="mb-4"
-                            >
-                              {sentence.trim()}。
-                            </motion.p>
-                          )
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* CTA 按鈕 */}
-                  <div className="px-8 py-6 border-t border-[#ceb485]/20 bg-[#25344F]/30">
-                    <button
-                      onClick={() => navigate('/achievement')}
-                      className="w-full magic-scroll text-[#25344F] font-bold py-4 px-8 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg transform hover:scale-[1.02]"
-                    >
-                      <span className="text-lg">查看完整人生成就報告</span>
-                      <ChevronRight size={24} />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* 右側五維分析卡片 (40%) */}
-              <motion.div 
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="lg:col-span-2"
-              >
-                <div className="parchment-card rounded-3xl shadow-2xl overflow-hidden h-full">
-                  {/* 卡片標題 */}
-                  <div className="px-8 py-6 border-b border-[#ceb485]/20 bg-gradient-to-r from-[#25344F]/50 to-[#5f4e42]/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#5f4e42]/20 rounded-xl flex items-center justify-center">
-                        <Target size={20} className="text-[#5f4e42]" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-[#ceb485] magic-text">人生五維分析</h2>
-                        <p className="text-[#e2e0d3]/70 text-sm ancient-text">各項能力評估</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-8 flex flex-col justify-center flex-1">
-                    {/* 雷達圖 */}
-                    <div className="mb-8 magic-circle">
-                      <RadarChartComponent data={summaryState.radar} />
-                    </div>
-                    
-                    {/* 人生分數展示 */}
-                    <div className="text-center space-y-4">
-                      <div className="relative">
-                        <div className="text-6xl font-black text-transparent bg-gradient-to-r from-[#ceb485] to-[#5f4e42] bg-clip-text mb-2 magic-text">
-                          {summaryState.lifeScore}
-                        </div>
-                        <div className="text-[#e2e0d3] text-lg font-medium ancient-text">
-                          人生分數 / 100
-                        </div>
-                      </div>
-                      
-                      {/* 表現等級 */}
-                      <div className={`inline-flex items-center gap-2 px-4 py-2 ${performance.bg} border border-current/20 rounded-full`}>
-                        <div className={`w-2 h-2 rounded-full ${performance.color.replace('text-', 'bg-')}`} />
-                        <span className={`${performance.color} font-semibold text-sm ancient-text`}>
-                          整體表現：{performance.level}
-                        </span>
-                      </div>
-                      
-                      {/* 補充說明 */}
-                      <p className="text-[#e2e0d3]/70 text-sm leading-relaxed mt-4 ancient-text">
-                        與理想人生目標的整體達成度評估
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+          <div className="prophet-article">
+            <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
+              人生五維分析
+            </h2>
+            
+            <div className="mb-6">
+              <RadarChartComponent data={summaryState.radar} hideScale={true} />
+            </div>
+            
+            <div className="text-center space-y-4">
+              <div className="text-5xl font-black text-[var(--prophet-dark)] mb-2 prophet-title">
+                {summaryState.lifeScore}
+              </div>
+              <div className="prophet-text font-medium">
+                人生分數 / 100
+              </div>
+              
+              <div className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--prophet-border)]">
+                <div className="w-2 h-2 bg-[var(--prophet-accent)]"></div>
+                <span className="prophet-small-text font-semibold">
+                  整體表現：{performance.level}
+                </span>
+              </div>
             </div>
           </div>
         </div>

@@ -1,8 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Award, 
-  History, 
   ArrowLeft, 
   Facebook, 
   Twitter, 
@@ -12,8 +11,7 @@ import {
   RefreshCcw,
   Trophy,
   Clock,
-  Share2,
-  Sparkles
+  Share2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
@@ -28,8 +26,12 @@ export const AchievementPage: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const { showToast, ToastComponent } = useToast();
 
+  // 頁面載入時滾動到頂部
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   if (!summaryState) {
-    // 如果沒有 summaryState，跳轉到 summary 頁面
     navigate('/summary');
     return null;
   }
@@ -69,7 +71,7 @@ export const AchievementPage: React.FC = () => {
     setExporting(true);
     try {
       const canvas = await html2canvas(posterRef.current, {
-        backgroundColor: '#1e293b',
+        backgroundColor: '#f8f6f0',
         scale: 2,
         useCORS: true,
         allowTaint: true
@@ -99,257 +101,151 @@ export const AchievementPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#25344F] via-[#5f4e42] to-[#25344F]">
-      {/* 背景裝飾 */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ceb485]/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#5f4e42]/10 rounded-full blur-3xl" />
-      </div>
+    <div className="prophet-page" style={{ backgroundImage: 'url(https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/background_cznh7q.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+      <header className="text-center py-4 border-b-2 border-[var(--prophet-border)] relative">
+        <button
+          onClick={() => navigate('/summary')}
+          className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 prophet-button text-sm"
+          style={{ transform: 'translateY(-50%)' }}
+        >
+          <ArrowLeft size={14} />
+          返回總結
+        </button>
+        
+        <h1 className="prophet-title text-2xl mb-2">
+          {"THE DAILY PROPHET".split("").map((char, index) => (
+            <span key={index} className={`${char === 'A' ? 'text-[var(--prophet-accent)] inline-block' : ''}`} style={{ animation: char === 'A' ? 'bounce-a 3s infinite' : 'none' }}>
+              {char}
+            </span>
+          ))}
+        </h1>
+        <div className="prophet-dateline">
+          ★ 人生成就報告特刊 ★
+        </div>
+        
+        <button
+          onClick={handleRestart}
+          className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 prophet-button text-sm"
+          style={{ transform: 'translateY(-50%)' }}
+        >
+          <RefreshCcw size={14} />
+          重新開始
+        </button>
+      </header>
 
-      <div className="relative z-10">
-        {/* 頁首操作列 */}
-        <div className="sticky top-0 z-20 backdrop-blur-xl bg-[#25344F]/80 border-b border-[#ceb485]/20">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex justify-between items-center">
-              {/* 左側：返回按鈕 */}
-              <button
-                onClick={() => navigate('/summary')}
-                className="flex items-center gap-3 px-4 py-2 bg-[#5f4e42]/30 hover:bg-[#5f4e42]/50 backdrop-blur-sm rounded-xl transition-all duration-300 border border-[#ceb485]/20 text-[#e2e0d3]"
-              >
-                <ArrowLeft size={18} />
-                <span className="font-medium">返回總結</span>
-              </button>
-
-              {/* 中間：標題 */}
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-[#ceb485] flex items-center gap-2">
-                  <Sparkles size={24} className="text-[#ceb485]" />
-                  人生成就報告
-                </h1>
-                <p className="text-[#5f4e42] text-sm mt-1">您的完整人生旅程回顧</p>
+      <div className="p-6">
+        <div className="grid grid-cols-7 gap-6 min-h-[600px]">
+          <div className="col-span-2">
+            <div className="prophet-article h-full">
+              <h2 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2 flex items-center gap-2">
+                <Trophy size={16} className="text-[var(--prophet-accent)]" />
+                解鎖成就
+              </h2>
+              
+              <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+                {summaryState.achievements.length > 0 ? (
+                  <div className="space-y-4">
+                    {summaryState.achievements.map((achievement, index) => (
+                      <div key={index} className="border border-[var(--prophet-border)] p-3 hover:border-[var(--prophet-dark)] transition-all">
+                        <div className="flex gap-3 items-start">
+                          {achievement.iconUrl ? (
+                            <img src={achievement.iconUrl} alt={achievement.title} className="w-8 h-8 prophet-photo flex-shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 border border-[var(--prophet-dark)] flex items-center justify-center text-sm flex-shrink-0">🏆</div>
+                          )}
+                          <div className="flex-1">
+                            <h3 className="prophet-subtitle font-bold mb-1 text-sm">{achievement.title}</h3>
+                            <p className="prophet-small-text leading-relaxed">{achievement.desc}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-[var(--prophet-accent)]">
+                    <Award size={32} className="mx-auto mb-2 opacity-50" />
+                    <p className="prophet-text">尚未解鎖成就</p>
+                  </div>
+                )}
               </div>
+            </div>
+          </div>
 
-              {/* 右側：操作按鈕 */}
-              <div className="flex items-center gap-3">
-                {/* 社交分享按鈕 */}
-                <div className="flex items-center gap-1 bg-[#5f4e42]/20 backdrop-blur-sm rounded-2xl p-1 border border-[#ceb485]/20">
+          <div className="col-span-2">
+            <div className="prophet-article h-full">
+              <h2 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2 flex items-center gap-2">
+                <Clock size={16} className="text-[var(--prophet-accent)]" />
+                關鍵抉擇
+              </h2>
+              
+              <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+                <div className="space-y-4 relative">
+                  <div className="absolute left-3 top-0 bottom-0 w-px bg-[var(--prophet-border)]"></div>
+                  
+                  {summaryState.keyChoices.map((choice, index) => (
+                    <div key={index} className="flex gap-3 items-start relative">
+                      <div className="bg-[var(--prophet-dark)] text-[var(--prophet-light)] w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 relative z-10">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 border border-[var(--prophet-border)] p-3">
+                        <p className="prophet-small-text leading-relaxed">{choice}</p>
+                        <div className="mt-1 text-xs text-[var(--prophet-accent)]">第 {index + 1} 個重要決定</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-3">
+            <div className="prophet-article h-full">
+              <div className="flex justify-between items-center mb-4 border-b border-[var(--prophet-border)] pb-2">
+                <h2 className="prophet-headline text-lg flex items-center gap-2">
+                  <Share2 size={16} className="text-[var(--prophet-accent)]" />
+                  我的人生海報
+                </h2>
+                
+                <div className="flex items-center gap-2 -ml-20">
+                  <div className="flex gap-1">
+                    <button onClick={handleFacebookShare} className="p-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-all" title="Facebook">
+                      <Facebook size={14} />
+                    </button>
+                    <button onClick={handleTwitterShare} className="p-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-all" title="X">
+                      <Twitter size={14} />
+                    </button>
+                    <button onClick={handleInstagramShare} className="p-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-all" title="Instagram">
+                      <Instagram size={14} />
+                    </button>
+                    <button onClick={handleCopyLink} className="p-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-all" title="複製連結">
+                      <Link size={14} />
+                    </button>
+                  </div>
+                  
                   <button
-                    onClick={handleFacebookShare}
-                    className="p-2 hover:bg-[#ceb485]/20 rounded-xl transition-all duration-200 group"
-                    title="分享到 Facebook"
+                    onClick={handleDownloadJPG}
+                    disabled={exporting}
+                    className="p-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-all disabled:opacity-50"
+                    title="下載 JPG"
                   >
-                    <Facebook size={16} className="text-[#5f4e42] group-hover:text-[#ceb485]" />
-                  </button>
-                  <button
-                    onClick={handleTwitterShare}
-                    className="p-2 hover:bg-[#ceb485]/20 rounded-xl transition-all duration-200 group"
-                    title="分享到 X (Twitter)"
-                  >
-                    <Twitter size={16} className="text-[#5f4e42] group-hover:text-[#ceb485]" />
-                  </button>
-                  <button
-                    onClick={handleInstagramShare}
-                    className="p-2 hover:bg-[#ceb485]/20 rounded-xl transition-all duration-200 group"
-                    title="分享到 Instagram"
-                  >
-                    <Instagram size={16} className="text-[#5f4e42] group-hover:text-[#ceb485]" />
-                  </button>
-                  <button
-                    onClick={handleCopyLink}
-                    className="p-2 hover:bg-[#ceb485]/20 rounded-xl transition-all duration-200 group"
-                    title="複製連結"
-                  >
-                    <Link size={16} className="text-[#5f4e42] group-hover:text-[#ceb485]" />
+                    <Download size={14} />
                   </button>
                 </div>
-
-                {/* 功能按鈕 */}
-                <button
-                  onClick={handleDownloadJPG}
-                  disabled={exporting}
-                  className="flex items-center gap-2 px-4 py-2 magic-scroll text-[#25344F] rounded-xl transition-all duration-300 disabled:opacity-50 shadow-lg"
-                >
-                  <Download size={16} />
-                  <span className="font-medium">{exporting ? '匯出中...' : '下載 JPG'}</span>
-                </button>
-
-                <button
-                  onClick={handleRestart}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#632024]/30 hover:bg-[#632024]/50 border border-[#632024]/50 rounded-xl transition-all duration-300 text-[#e2e0d3]"
-                >
-                  <RefreshCcw size={16} />
-                  <span className="font-medium">重新開始</span>
-                </button>
+              </div>
+              
+              <div ref={posterRef} className="w-full flex justify-center">
+                <SharePoster
+                  finalImageUrl={summaryState.finalImageUrl}
+                  lifeScore={summaryState.lifeScore}
+                  radar={summaryState.radar}
+                  tagline="我的 AI 人生模擬結果"
+                />
               </div>
             </div>
           </div>
         </div>
-
-        {/* 主要內容區 */}
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* 左欄：成就 (28%) */}
-            <motion.div 
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="lg:col-span-3"
-            >
-              <div className="bg-[#5f4e42]/20 backdrop-blur-xl border border-[#ceb485]/20 rounded-3xl shadow-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-[#ceb485]/20 bg-gradient-to-r from-[#25344F]/50 to-[#5f4e42]/30">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#ceb485]/20 rounded-xl flex items-center justify-center">
-                      <Trophy size={20} className="text-[#ceb485]" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#ceb485]">解鎖成就</h2>
-                      <p className="text-[#e2e0d3]/70 text-sm">你的人生成就</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-6 max-h-[600px] overflow-y-auto custom-scrollbar">
-                  {summaryState.achievements.length > 0 ? (
-                    <div className="space-y-4">
-                      {summaryState.achievements.map((achievement, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="group bg-[#25344F]/30 hover:bg-[#25344F]/50 rounded-2xl p-4 border border-[#ceb485]/20 hover:border-[#ceb485]/40 transition-all duration-300 cursor-pointer"
-                        >
-                          <div className="flex gap-4 items-start">
-                            {achievement.iconUrl ? (
-                              <img
-                                src={achievement.iconUrl}
-                                alt={achievement.title}
-                                className="w-12 h-12 rounded-xl flex-shrink-0 shadow-lg"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center text-lg flex-shrink-0 shadow-lg">
-                                🏆
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-[#ceb485] mb-2 group-hover:text-[#e2e0d3] transition-colors">
-                                {achievement.title}
-                              </h3>
-                              <p className="text-sm text-[#e2e0d3]/80 leading-relaxed mb-3">
-                                {achievement.desc}
-                              </p>
-                              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#ceb485]/20 text-[#ceb485] text-xs rounded-full border border-[#ceb485]/30">
-                                <div className="w-1.5 h-1.5 bg-[#ceb485] rounded-full" />
-                                已解鎖
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-[#5f4e42]">
-                      <Award size={48} className="mb-4 opacity-50" />
-                      <p className="text-center font-medium">尚未解鎖成就</p>
-                      <p className="text-center text-sm mt-2 opacity-70">繼續努力，解鎖更多成就！</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* 中欄：關鍵抉擇 (28%) */}
-            <motion.div 
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="lg:col-span-3"
-            >
-              <div className="bg-[#5f4e42]/20 backdrop-blur-xl border border-[#ceb485]/20 rounded-3xl shadow-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-[#ceb485]/20 bg-gradient-to-r from-[#25344F]/50 to-[#5f4e42]/30">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#5f4e42]/20 rounded-xl flex items-center justify-center">
-                      <Clock size={20} className="text-[#5f4e42]" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#ceb485]">關鍵抉擇</h2>
-                      <p className="text-[#e2e0d3]/70 text-sm">影響人生的重要時刻</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-6 max-h-[600px] overflow-y-auto custom-scrollbar">
-                  <div className="space-y-6 relative">
-                    {/* 時間軸線 */}
-                    <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-[#ceb485]/50 via-[#5f4e42]/30 to-transparent"></div>
-                    
-                    {summaryState.keyChoices.map((choice, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + index * 0.1 }}
-                        className="flex gap-4 items-start relative"
-                      >
-                        <div className="magic-scroll text-[#25344F] rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 relative z-10 shadow-lg">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 bg-[#25344F]/30 hover:bg-[#25344F]/50 rounded-2xl p-4 border border-[#ceb485]/20 hover:border-[#ceb485]/40 transition-all duration-300 group">
-                          <p className="text-sm text-[#e2e0d3] leading-relaxed group-hover:text-[#ceb485] transition-colors">
-                            {choice}
-                          </p>
-                          <div className="mt-2 text-xs text-[#5f4e42]">
-                            第 {index + 1} 個重要決定
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* 右欄：分享海報 (44%) */}
-            <motion.div 
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="lg:col-span-6"
-            >
-              <div className="bg-[#5f4e42]/20 backdrop-blur-xl border border-[#ceb485]/20 rounded-3xl shadow-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-[#ceb485]/20 bg-gradient-to-r from-[#25344F]/50 to-[#5f4e42]/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#5f4e42]/20 rounded-xl flex items-center justify-center">
-                        <Share2 size={20} className="text-[#5f4e42]" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-bold text-[#ceb485]">我的人生海報</h2>
-                        <p className="text-[#e2e0d3]/70 text-sm">可分享的成果卡片</p>
-                      </div>
-                    </div>
-                    <div className="text-xs text-[#5f4e42] bg-[#25344F]/30 px-3 py-1 rounded-full">
-                      可匯出 JPG
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  <div ref={posterRef} className="w-full aspect-[4/5]">
-                    <SharePoster
-                      finalImageUrl={summaryState.finalImageUrl}
-                      lifeScore={summaryState.lifeScore}
-                      radar={summaryState.radar}
-                      tagline="我的 AI 人生模擬結果"
-                    />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
       </div>
-
-      {/* Toast 通知 */}
+      
       {ToastComponent}
     </div>
   );

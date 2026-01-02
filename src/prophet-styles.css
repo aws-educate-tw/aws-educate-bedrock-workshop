@@ -1,0 +1,344 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 預言家日報色彩 */
+:root {
+  --prophet-bg: #f8f6f0;          /* 舊報紙背景 */
+  --prophet-dark: #1a1a1a;        /* 深黑墨色 */
+  --prophet-text: #2d2d2d;        /* 報紙文字色 */
+  --prophet-accent: #8b6914;      /* 金色裝飾 */
+  --prophet-border: #000000;      /* 黑色邊框 */
+  --prophet-light: #ffffff;       /* 白色區塊 */
+  --prophet-shadow: rgba(0, 0, 0, 0.3); /* 陰影色 */
+  --prophet-gray: #666666;        /* 灰色文字 */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Crimson Text', serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--prophet-bg);
+  color: var(--prophet-text);
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(0, 0, 0, 0.01) 1px,
+      rgba(0, 0, 0, 0.01) 2px
+    );
+}
+
+/* 預言家日報主框架 */
+.prophet-page {
+  background: var(--prophet-light);
+  border: 4px solid var(--prophet-border);
+  box-shadow: 
+    0 0 0 2px var(--prophet-light),
+    0 0 0 6px var(--prophet-border),
+    0 8px 16px var(--prophet-shadow);
+  position: relative;
+  margin: 20px;
+  min-height: calc(100vh - 40px);
+}
+
+/* 預言家日報標題字體 */
+.prophet-masthead {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--prophet-dark);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  margin: 0;
+}
+
+.prophet-title {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--prophet-dark);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.prophet-headline {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--prophet-dark);
+  text-align: center;
+}
+
+/* 預言家日報副標題字體 */
+.prophet-subtitle {
+  font-family: 'Old Standard TT', serif;
+  font-weight: 600;
+  color: var(--prophet-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* 預言家日報內文字體 */
+.prophet-text {
+  font-family: 'Crimson Text', serif;
+  line-height: 1.4;
+  color: var(--prophet-text);
+  font-size: 0.9rem;
+}
+
+.prophet-small-text {
+  font-family: 'Crimson Text', serif;
+  line-height: 1.3;
+  color: var(--prophet-text);
+  font-size: 0.75rem;
+}
+
+/* 預言家日報文章框 */
+.prophet-article {
+  background: var(--prophet-light);
+  border: 2px solid var(--prophet-border);
+  position: relative;
+  padding: 1rem;
+}
+
+.prophet-article::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 1px solid var(--prophet-border);
+  pointer-events: none;
+}
+
+/* 預言家日報卡片 */
+.prophet-card {
+  background: var(--prophet-light);
+  border: 1px solid var(--prophet-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+/* 預言家日報按鈕樣式 */
+.prophet-button {
+  background: var(--prophet-dark);
+  color: var(--prophet-light);
+  border: 2px solid var(--prophet-border);
+  font-family: 'Old Standard TT', serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.prophet-button:hover {
+  background: var(--prophet-light);
+  color: var(--prophet-dark);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.prophet-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 預言家日報輸入框樣式 */
+.prophet-input {
+  background: var(--prophet-light);
+  border: 1px solid var(--prophet-border);
+  color: var(--prophet-text);
+  font-family: 'Crimson Text', serif;
+  transition: all 0.2s ease;
+}
+
+.prophet-input:focus {
+  border-color: var(--prophet-accent);
+  box-shadow: 0 0 0 1px var(--prophet-accent);
+  outline: none;
+}
+
+.prophet-input::placeholder {
+  color: var(--prophet-gray);
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* 預言家日報照片框 */
+.prophet-photo {
+  border: 2px solid var(--prophet-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  filter: sepia(20%) contrast(1.2) brightness(0.95) grayscale(30%);
+  position: relative;
+}
+
+.prophet-photo::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  pointer-events: none;
+}
+
+/* 預言家日報分隔線 */
+.prophet-divider {
+  border-top: 1px solid var(--prophet-border);
+  position: relative;
+  margin: 1rem 0;
+}
+
+.prophet-divider::before {
+  content: '★';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--prophet-bg);
+  padding: 0 8px;
+  color: var(--prophet-accent);
+  font-size: 12px;
+}
+
+.prophet-divider.double {
+  border-top: 2px double var(--prophet-border);
+}
+
+.prophet-divider.thick {
+  border-top: 3px solid var(--prophet-border);
+}
+
+/* 預言家日報專欄樣式 */
+.prophet-column {
+  column-count: 2;
+  column-gap: 1.5rem;
+  column-rule: 1px solid var(--prophet-border);
+}
+
+.prophet-column p {
+  break-inside: avoid;
+  margin-bottom: 0.8rem;
+}
+
+/* 預言家日報標題裝飾 */
+.prophet-masthead-decoration {
+  position: relative;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.prophet-masthead-decoration::before,
+.prophet-masthead-decoration::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 80px;
+  height: 2px;
+  background: var(--prophet-border);
+}
+
+.prophet-masthead-decoration::before {
+  left: 0;
+}
+
+.prophet-masthead-decoration::after {
+  right: 0;
+}
+
+/* 預言家日報日期線 */
+.prophet-dateline {
+  font-family: 'Old Standard TT', serif;
+  font-size: 0.8rem;
+  text-align: center;
+  color: var(--prophet-gray);
+  border-top: 1px solid var(--prophet-border);
+  border-bottom: 1px solid var(--prophet-border);
+  padding: 0.5rem 0;
+  margin: 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* 預言家日報廣告框 */
+.prophet-ad {
+  border: 2px double var(--prophet-border);
+  padding: 1rem;
+  text-align: center;
+  background: var(--prophet-light);
+  margin: 1rem 0;
+}
+
+/* 自定義滾動條 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--prophet-bg);
+  border-radius: 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--prophet-border);
+  border-radius: 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--prophet-dark);
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .prophet-masthead {
+    font-size: 2.5rem;
+    letter-spacing: 0.1em;
+  }
+  
+  .prophet-page {
+    margin: 10px;
+    min-height: calc(100vh - 20px);
+  }
+  
+  .prophet-column {
+    column-count: 1;
+  }
+  
+  .prophet-masthead-decoration::before,
+  .prophet-masthead-decoration::after {
+    width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .prophet-masthead {
+    font-size: 2rem;
+  }
+  
+  .prophet-masthead-decoration::before,
+  .prophet-masthead-decoration::after {
+    display: none;
+  }
+}
