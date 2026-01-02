@@ -2,6 +2,8 @@ const { z } = require("zod");
 
 const playerIdentitySchema = z.object({
     age: z.number().describe("玩家初始年齡"),
+    gender: z.string().describe("玩家性別"),
+    appearance: z.string().describe("玩家外觀描述（髮色、眼睛顏色、膚色、身材特徵等）"),
     profession: z.string().describe("玩家職業"),
     initial_traits: z.array(z.string()).describe("玩家初始特質列表"),
 });

@@ -1,7 +1,9 @@
-const { createLLM, invokeWithSchema, DEFAULT_MODEL_ID } = require("../services/llm");
+const { createLLM, invokeWithSchema } = require("../services/llm");
 const { getSession, parseSessionState, updateSessionAfterEvent } = require("../services/session");
 const { resolveEventPrompt } = require("../prompts/resolveEvent");
 const { resolveEventSchema } = require("../schemas/resolveEvent");
+const { generateImage, setCharacterAppearance } = require("../services/imageGenerator");
+const { setKnowledgeBaseId } = require("../services/knowledgeBase");
 
 const resolveEvent = async (body) => {
     if (!body.session_id || !body.event || !body.selected_option) {
@@ -28,11 +30,17 @@ const resolveEvent = async (body) => {
         };
     }
 
-    const { modelId, currentSummary, lifeGoal, playerState } = parseSessionState(sessionItem);
+    const { knowledgeBaseId, currentSummary, lifeGoal, playerState, playerIdentity } = parseSessionState(sessionItem);
+
+    // 設定此次請求使用的 Knowledge Base ID
+    setKnowledgeBaseId(knowledgeBaseId);
+
+    // 設定角色外觀資訊（供生圖使用）
+    setCharacterAppearance(playerIdentity);
 
     let resolvePayload;
     try {
-        const llm = createLLM(modelId || DEFAULT_MODEL_ID);
+        const llm = createLLM();
         resolvePayload = await invokeWithSchema(llm, resolveEventPrompt, resolveEventSchema, {
             summary: currentSummary,
             goal: lifeGoal,
@@ -47,7 +55,7 @@ const resolveEvent = async (body) => {
         };
     }
 
-    if (!resolvePayload?.event_outcome || !resolvePayload?.updated_player_state || !resolvePayload?.current_summary) {
+    if (!resolvePayload?.event_outcome || !resolvePayload?.updated_player_state || !resolvePayload?.current_summary || !resolvePayload?.stat_changes) {
         return {
             statusCode: 502,
             body: JSON.stringify({ message: "Invalid model response", raw: resolvePayload }),
@@ -68,7 +76,7 @@ const resolveEvent = async (body) => {
             historyItem,
             updatedPlayerState: resolvePayload.updated_player_state,
             updatedSummary: resolvePayload.current_summary,
-            modelId: modelId || DEFAULT_MODEL_ID,
+            knowledgeBaseId,
             lifeGoal,
         });
     } catch (error) {
@@ -78,12 +86,17 @@ const resolveEvent = async (body) => {
         };
     }
 
+    // 生成結果圖片
+    const image = await generateImage(resolvePayload.event_outcome);
+
     return {
         statusCode: 200,
         body: JSON.stringify({
             event_outcome: resolvePayload.event_outcome,
             updated_player_state: resolvePayload.updated_player_state,
+            stat_changes: resolvePayload.stat_changes,
             current_summary: resolvePayload.current_summary,
+            image: image || null,
         }),
     };
 };

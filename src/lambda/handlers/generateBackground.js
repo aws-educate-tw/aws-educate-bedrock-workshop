@@ -1,27 +1,25 @@
-const { createLLM, invokeWithRAG, DEFAULT_MODEL_ID } = require("../services/llm");
+const { createLLM, invokeWithSchema } = require("../services/llm");
 const { createSession } = require("../services/session");
 const { backgroundPrompt } = require("../prompts/background");
 const { backgroundSchema } = require("../schemas/background");
 const { tableName } = require("../utils/dynamodb");
+const { generateImage, setCharacterAppearance } = require("../services/imageGenerator");
 
 const generateBackground = async (body) => {
-    if (!body.model_id) {
+    if (!body.knowledge_base_id) {
         return {
             statusCode: 400,
-            body: JSON.stringify({ message: "model_id is required" }),
+            body: JSON.stringify({ message: "knowledge_base_id is required" }),
         };
     }
 
     const sessionId = `session_${Date.now()}`;
-    const modelId = body.model_id || DEFAULT_MODEL_ID;
 
     let backgroundPayload;
     try {
-        const llm = createLLM(modelId);
-        backgroundPayload = await invokeWithRAG(llm, backgroundPrompt, backgroundSchema, {}, {
-            query: "人生模擬遊戲 背景設定 世界觀",
-            numberOfResults: 3,
-        });
+        const llm = createLLM();
+        // generateBackground 不使用 RAG，世界觀已經寫在 prompt 裡面
+        backgroundPayload = await invokeWithSchema(llm, backgroundPrompt, backgroundSchema, {});
     } catch (error) {
         return {
             statusCode: 502,
@@ -36,7 +34,7 @@ const generateBackground = async (body) => {
     if (tableName) {
         try {
             await createSession(sessionId, {
-                modelId,
+                knowledgeBaseId: body.knowledge_base_id,
                 background: backgroundPayload,
                 playerIdentity,
                 lifeGoal,
@@ -49,6 +47,15 @@ const generateBackground = async (body) => {
         }
     }
 
+    // 設定角色外觀資訊（供後續生圖使用）
+    setCharacterAppearance({
+        gender: playerIdentity.gender || "",
+        appearance: playerIdentity.appearance || "",
+    });
+
+    // 生成背景圖片
+    const image = await generateImage(background);
+
     return {
         statusCode: 200,
         body: JSON.stringify({
@@ -56,6 +63,7 @@ const generateBackground = async (body) => {
             background,
             player_identity: playerIdentity,
             life_goal: lifeGoal,
+            image: image || null,
         }),
     };
 };
