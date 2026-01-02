@@ -1,0 +1,152 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+openapi: "3.0.1"
+
+info:
+  title: "life-simulation-game-api"
+  description: |
+    Session-based life simulation game API powered by Large Language Models (LLMs).
+    All requests are forwarded to a single Lambda function, where routing and game logic
+    are handled internally.
+  version: "1.0.0"
+
+paths:
+  /generate-background:
+    post:
+      summary: "Initialize a new life simulation session"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model_id:
+                  type: string
+                  description: "LLM model ID to use for this session"
+              required:
+                - model_id
+      responses:
+        "200":
+          description: "Initial game background and session ID"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /generate-story:
+    post:
+      summary: "Generate a life event based on current session state"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+              required:
+                - session_id
+      responses:
+        "200":
+          description: "Generated life event and available options"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /resolve-event:
+    post:
+      summary: "Resolve a life event and update player state"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                event:
+                  type: object
+                selected_option:
+                  type: string
+              required:
+                - session_id
+                - event
+                - selected_option
+      responses:
+        "200":
+          description: "Updated player state and life summary"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /generate-result:
+    post:
+      summary: "Generate final life outcome and radar scores"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+              required:
+                - session_id
+      responses:
+        "200":
+          description: "Final life summary and radar chart scores"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /db-test:
+    post:
+      summary: "Write and read a test item in DynamoDB"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                payload:
+                  type: string
+      responses:
+        "200":
+          description: "DynamoDB write/read result"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /db-health:
+    get:
+      summary: "Check DynamoDB read access"
+      responses:
+        "200":
+          description: "DynamoDB read access status"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /lambda-health:
+    get:
+      summary: "Check Lambda health"
+      responses:
+        "200":
+          description: "Lambda health status"
+          content:
+            application/json:
+              schema:
+                type: object

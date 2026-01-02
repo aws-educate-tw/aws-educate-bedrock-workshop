@@ -1,0 +1,157 @@
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: SAM Template for Lambda Response with Bedrock Model Integration
+
+Parameters:
+  KnowledgeBaseId:
+    Type: String
+    Default: ""
+    Description: Bedrock Knowledge Base ID (optional)
+
+Resources:
+  # CloudWatch Log Group for API Gateway Access Logs
+  ApiGatewayAccessLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 30
+      LogGroupName: !Sub "/aws/apigateway/${AWS::StackName}/access-logs"
+
+  # IAM Role for API Gateway to write to CloudWatch Logs
+  ApiGatewayCloudWatchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  # API Gateway Account Configuration
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchRole.Arn
+
+  ApiGW:
+    Type: AWS::Serverless::Api
+    DependsOn: ApiGatewayAccount
+    Properties:
+      StageName: Prod
+      EndpointConfiguration:
+        Type: REGIONAL
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiGatewayAccessLogs.Arn
+        Format: '{"requestId":"$context.requestId","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","path":"$context.path","resourcePath":"$context.resourcePath","status":$context.status,"responseLength":$context.responseLength,"responseTime":$context.responseTime,"userAgent":"$context.identity.userAgent","sourceIp":"$context.identity.sourceIp","protocol":"$context.protocol","error.message":"$context.error.message","error.messageString":"$context.error.messageString"}'
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          DataTraceEnabled: true
+          MetricsEnabled: true
+
+  ResponseFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../lambda/
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Architectures:
+        - arm64
+      MemorySize: 256
+      Timeout: 300
+      Environment:
+        Variables:
+          BEDROCK_REGION: !Ref AWS::Region
+          DDB_TABLE_NAME: !Ref GameSessionsTable
+          KNOWLEDGE_BASE_ID: !Ref KnowledgeBaseId
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref GameSessionsTable
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - bedrock-runtime:InvokeModel
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - bedrock:Retrieve
+              Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*"
+      Events:
+        GenerateBackground:
+          Type: Api
+          Properties:
+            Path: /generate-background
+            Method: post
+            RestApiId: !Ref ApiGW
+        GenerateStory:
+          Type: Api
+          Properties:
+            Path: /generate-story
+            Method: post
+            RestApiId: !Ref ApiGW
+        ResolveEvent:
+          Type: Api
+          Properties:
+            Path: /resolve-event
+            Method: post
+            RestApiId: !Ref ApiGW
+        GenerateResult:
+          Type: Api
+          Properties:
+            Path: /generate-result
+            Method: post
+            RestApiId: !Ref ApiGW
+        DbHealth:
+          Type: Api
+          Properties:
+            Path: /db-health
+            Method: get
+            RestApiId: !Ref ApiGW
+        LambdaHealth:
+          Type: Api
+          Properties:
+            Path: /lambda-health
+            Method: get
+            RestApiId: !Ref ApiGW
+
+  GameSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: GameSessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  ApiGatewayInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ResponseFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGW}/*/*"
+
+Outputs:
+  ApiBaseUrl:
+    Description: "API Gateway base URL"
+    Value: !Sub "https://${ApiGW}.execute-api.${AWS::Region}.amazonaws.com/Prod"
