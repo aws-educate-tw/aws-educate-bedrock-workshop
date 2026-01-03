@@ -514,3 +514,21 @@ aws cloudformation deploy \
   --region us-east-1 \
   --capabilities CAPABILITY_IAM
 ```
+
+## 4) 上傳前端到 S3（打包成 zip）
+
+```bash
+./scripts/deploy-frontend.sh <source-dir> <s3-bucket> <s3-prefix> [region]
+```
+
+範例：
+
+```bash
+./scripts/deploy-frontend.sh test-frontend workshop-demo-artifacts frontend us-east-1
+```
+
+上傳後會產生：
+
+```
+s3://workshop-demo-artifacts/frontend/frontend.zip
+```
