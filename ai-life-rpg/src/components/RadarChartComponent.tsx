@@ -16,9 +16,10 @@ interface RadarChartComponentProps {
     career: number;
     health: number;
   };
+  hideScale?: boolean;
 }
 
-export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }) => {
+export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data, hideScale = false }) => {
   // 轉換數據格式為 Recharts 需要的格式
   const chartData = [
     { subject: '智慧', value: data.wisdom },
@@ -29,27 +30,30 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }
   ];
 
   return (
-    <div className="w-full h-64">
+    <div className="w-full h-64 relative">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
           <PolarGrid 
-            stroke="#475569" 
+            stroke="var(--newspaper-dark)" 
             strokeWidth={1}
+            strokeOpacity={0.4}
           />
           <PolarAngleAxis 
             dataKey="subject" 
             tick={{ 
-              fill: '#94a3b8', 
+              fill: 'var(--newspaper-dark)', 
               fontSize: 12,
-              fontWeight: 500
+              fontWeight: 600,
+              fontFamily: 'Crimson Text, serif'
             }} 
           />
           <PolarRadiusAxis
             angle={90}
             domain={[0, 100]}
-            tick={{ 
-              fill: '#64748b', 
-              fontSize: 10 
+            tick={hideScale ? false : { 
+              fill: 'var(--newspaper-accent)', 
+              fontSize: 10,
+              fontFamily: 'Crimson Text, serif'
             }}
             tickCount={6}
             axisLine={false}
@@ -57,16 +61,26 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }
           <Radar
             name="能力值"
             dataKey="value"
-            stroke="#6366f1"
-            fill="#6366f1"
-            fillOpacity={0.3}
+            stroke="var(--newspaper-dark)"
+            fill="var(--newspaper-accent)"
+            fillOpacity={0.2}
             strokeWidth={2}
             dot={{ 
-              fill: '#6366f1', 
+              fill: 'var(--newspaper-dark)', 
               strokeWidth: 2, 
-              stroke: '#ffffff',
+              stroke: 'var(--newspaper-light)',
               r: 4 
             }}
+          />
+          {/* 輔助線條 */}
+          <Radar
+            name="輔助線"
+            dataKey="value"
+            stroke="var(--newspaper-accent)"
+            fill="transparent"
+            strokeWidth={1}
+            strokeOpacity={0.6}
+            dot={false}
           />
         </RadarChart>
       </ResponsiveContainer>

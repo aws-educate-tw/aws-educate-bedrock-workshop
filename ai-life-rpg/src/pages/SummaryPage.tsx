@@ -1,174 +1,140 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, TrendingUp, Target, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useAppStore } from '../store';
+import { ChevronRight } from 'lucide-react';
+import { useAppStore, SummaryState } from '../store';
 import { RadarChartComponent } from '../components/RadarChartComponent';
 
 export const SummaryPage: React.FC = () => {
   const navigate = useNavigate();
   const { summaryState } = useAppStore();
+  const headerRef = useRef<HTMLElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    // 頁面載入時滾動到頂部
+    window.scrollTo(0, 0);
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    [headerRef.current, ...cardRefs.current].forEach(ref => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   if (!summaryState) {
-    navigate('/');
+    // 如果沒有 summaryState，使用預設資料
+    const { setSummaryState } = useAppStore();
+    const defaultSummary: SummaryState = {
+      lifeScore: 75,
+      radar: {
+        wisdom: 80,
+        wealth: 65,
+        relationship: 90,
+        career: 70,
+        health: 80
+      },
+      finalSummaryText: '你度過了充實而有意義的一生。從小就展現出的善良和智慧，讓你在人生的各個階段都能做出正確的選擇。你重視人際關係，也不忘記持續學習和成長。',
+      achievements: [
+        { title: '智慧者', desc: '在人生中展現出卓越的智慧' },
+        { title: '人際達人', desc: '擁有良好的人際關係網絡' }
+      ],
+      keyChoices: [
+        '童年時選擇幫助害羞的同學，培養了同理心',
+        '學生時期專注學業，奠定了知識基礎',
+        '成年後選擇穩定的工作，重視工作生活平衡'
+      ]
+    };
+    setSummaryState(defaultSummary);
     return null;
   }
 
   // 計算整體表現等級
   const getPerformanceLevel = (score: number) => {
-    if (score >= 90) return { level: '卓越', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
-    if (score >= 75) return { level: '優秀', color: 'text-blue-400', bg: 'bg-blue-500/10' };
-    if (score >= 60) return { level: '良好', color: 'text-yellow-400', bg: 'bg-yellow-500/10' };
-    if (score >= 40) return { level: '普通', color: 'text-orange-400', bg: 'bg-orange-500/10' };
-    return { level: '待改善', color: 'text-red-400', bg: 'bg-red-500/10' };
+    if (score >= 90) return { level: '卓越', color: 'text-[#ceb485]', bg: 'bg-[#ceb485]/10' };
+    if (score >= 75) return { level: '優秀', color: 'text-[#5f4e42]', bg: 'bg-[#5f4e42]/10' };
+    if (score >= 60) return { level: '良好', color: 'text-[#e2e0d3]', bg: 'bg-[#e2e0d3]/10' };
+    if (score >= 40) return { level: '普通', color: 'text-[#5f4e42]', bg: 'bg-[#5f4e42]/10' };
+    return { level: '待改善', color: 'text-[#632024]', bg: 'bg-[#632024]/10' };
   };
 
   const performance = getPerformanceLevel(summaryState.lifeScore);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* 背景裝飾 */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* 頁首區域 */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12 px-6"
-        >
-          <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-300 text-sm font-medium mb-6">
-              <Sparkles size={16} />
-              <span>AI 人生模擬完成</span>
+    <div className="prophet-page" style={{ backgroundImage: 'url(https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/background_cznh7q.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+      <header className="text-center py-4 border-b-2 border-[var(--prophet-border)]">
+        <h1 className="prophet-title text-2xl mb-2">
+          {"THE DAILY PROPHET".split("").map((char, index) => (
+            <span key={index} className={`${char === 'A' ? 'text-[var(--prophet-accent)] inline-block' : ''}`} style={{ animation: char === 'A' ? 'bounce-a 3s infinite' : 'none' }}>
+              {char}
+            </span>
+          ))}
+        </h1>
+        <div className="prophet-dateline">
+          ★ 人生總結特刊 ★
+        </div>
+      </header>
+      <div className="p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="prophet-article">
+            <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
+              人生總結
+            </h2>
+            
+            <div className="prophet-text leading-relaxed space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
+              {summaryState.finalSummaryText.split('。').map((sentence, index) => (
+                sentence.trim() && (
+                  <p key={index} className="mb-4 text-justify">
+                    {sentence.trim()}。
+                  </p>
+                )
+              ))}
             </div>
             
-            <h1 className="text-5xl font-bold text-white mb-4">
-              人生總結
-            </h1>
-            
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              AI 根據你的一生選擇所生成的總體回顧
-            </p>
+            <div className="mt-6 pt-4 border-t border-[var(--prophet-border)]">
+              <button
+                onClick={() => navigate('/achievement')}
+                className="w-full prophet-button py-3 px-6 flex items-center justify-center gap-3"
+              >
+                <span>查看完整人生成就報告</span>
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
-        </motion.div>
 
-        {/* 主要內容區 */}
-        <div className="flex-1 px-6 pb-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              {/* 左側總結卡片 (60%) */}
-              <motion.div 
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="lg:col-span-3"
-              >
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
-                  {/* 卡片標題 */}
-                  <div className="px-8 py-6 border-b border-white/10 bg-gradient-to-r from-slate-800/50 to-slate-700/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
-                        <TrendingUp size={20} className="text-indigo-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-white">人生總結</h2>
-                        <p className="text-slate-400 text-sm">你的人生故事回顧</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* 總結內容 */}
-                  <div className="p-8">
-                    <div className="prose prose-lg prose-invert max-w-none">
-                      <div className="text-slate-200 leading-relaxed text-lg space-y-4 max-h-96 overflow-y-auto custom-scrollbar pr-4">
-                        {summaryState.finalSummaryText.split('。').map((sentence, index) => (
-                          sentence.trim() && (
-                            <motion.p 
-                              key={index}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.3 + index * 0.1 }}
-                              className="mb-4"
-                            >
-                              {sentence.trim()}。
-                            </motion.p>
-                          )
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* CTA 按鈕 */}
-                  <div className="px-8 py-6 border-t border-white/10 bg-slate-800/30">
-                    <button
-                      onClick={() => navigate('/achievement')}
-                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                    >
-                      <span className="text-lg">查看完整人生成就報告</span>
-                      <ChevronRight size={24} />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* 右側五維分析卡片 (40%) */}
-              <motion.div 
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="lg:col-span-2"
-              >
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden h-full">
-                  {/* 卡片標題 */}
-                  <div className="px-8 py-6 border-b border-white/10 bg-gradient-to-r from-slate-800/50 to-slate-700/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                        <Target size={20} className="text-purple-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-white">人生五維分析</h2>
-                        <p className="text-slate-400 text-sm">各項能力評估</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-8 flex flex-col justify-center flex-1">
-                    {/* 雷達圖 */}
-                    <div className="mb-8">
-                      <RadarChartComponent data={summaryState.radar} />
-                    </div>
-                    
-                    {/* 人生分數展示 */}
-                    <div className="text-center space-y-4">
-                      <div className="relative">
-                        <div className="text-6xl font-black text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text mb-2">
-                          {summaryState.lifeScore}
-                        </div>
-                        <div className="text-slate-400 text-lg font-medium">
-                          人生分數 / 100
-                        </div>
-                      </div>
-                      
-                      {/* 表現等級 */}
-                      <div className={`inline-flex items-center gap-2 px-4 py-2 ${performance.bg} border border-current/20 rounded-full`}>
-                        <div className={`w-2 h-2 rounded-full ${performance.color.replace('text-', 'bg-')}`} />
-                        <span className={`${performance.color} font-semibold text-sm`}>
-                          整體表現：{performance.level}
-                        </span>
-                      </div>
-                      
-                      {/* 補充說明 */}
-                      <p className="text-slate-400 text-sm leading-relaxed mt-4">
-                        與理想人生目標的整體達成度評估
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+          <div className="prophet-article">
+            <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
+              人生五維分析
+            </h2>
+            
+            <div className="mb-6">
+              <RadarChartComponent data={summaryState.radar} hideScale={true} />
+            </div>
+            
+            <div className="text-center space-y-4">
+              <div className="text-5xl font-black text-[var(--prophet-dark)] mb-2 prophet-title">
+                {summaryState.lifeScore}
+              </div>
+              <div className="prophet-text font-medium">
+                人生分數 / 100
+              </div>
+              
+              <div className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--prophet-border)]">
+                <div className="w-2 h-2 bg-[var(--prophet-accent)]"></div>
+                <span className="prophet-small-text font-semibold">
+                  整體表現：{performance.level}
+                </span>
+              </div>
             </div>
           </div>
         </div>
