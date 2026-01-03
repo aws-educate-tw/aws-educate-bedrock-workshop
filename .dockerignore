@@ -1,0 +1,8 @@
+.git
+.DS_Store
+archive
+test-frontend
+src/frontend
+src/lambda/node_modules
+**/node_modules
+**/*.log
