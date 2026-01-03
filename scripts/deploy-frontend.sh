@@ -16,7 +16,20 @@ if [[ ! -d "${SOURCE_DIR}" ]]; then
   exit 1
 fi
 
-DEST_PREFIX="${S3_PREFIX%/}"
-aws s3 sync "${SOURCE_DIR}" "s3://${BUCKET_NAME}/${DEST_PREFIX}/" --region "${REGION}"
+if ! command -v zip >/dev/null 2>&1; then
+  echo "Missing 'zip' command. Install it before running this script." >&2
+  exit 1
+fi
 
-echo "Deployed to: s3://${BUCKET_NAME}/${DEST_PREFIX}/"
+DEST_PREFIX="${S3_PREFIX%/}"
+ZIP_NAME="frontend.zip"
+TMP_DIR="$(mktemp -d)"
+
+pushd "${SOURCE_DIR}" >/dev/null
+zip -qr "${TMP_DIR}/${ZIP_NAME}" .
+popd >/dev/null
+
+aws s3 cp "${TMP_DIR}/${ZIP_NAME}" "s3://${BUCKET_NAME}/${DEST_PREFIX}/${ZIP_NAME}" --region "${REGION}"
+rm -rf "${TMP_DIR}"
+
+echo "Deployed to: s3://${BUCKET_NAME}/${DEST_PREFIX}/${ZIP_NAME}"

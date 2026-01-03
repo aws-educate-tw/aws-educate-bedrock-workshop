@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
-  echo "Usage: $0 <s3-bucket> <s3-key-prefix> [region]" >&2
+  echo "Usage: $0 <s3-bucket> <s3-prefix> [region]" >&2
   exit 1
 fi
 
