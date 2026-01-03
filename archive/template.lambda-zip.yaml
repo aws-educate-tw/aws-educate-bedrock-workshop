@@ -164,6 +164,101 @@ Resources:
             Action: s3:GetObject
             Resource: !Sub "${FrontendBucket.Arn}/*"
 
+  FrontendSeedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: FrontendSeedS3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub "${FrontendBucket.Arn}/*"
+
+  FrontendSeedFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt FrontendSeedRole.Arn
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json
+          import urllib.request
+          import boto3
+          import io
+          import zipfile
+          import mimetypes
+
+          def send_response(event, context, status, reason=None):
+              response_body = {
+                  "Status": status,
+                  "Reason": reason or "OK",
+                  "PhysicalResourceId": event.get("PhysicalResourceId") or context.log_stream_name,
+                  "StackId": event["StackId"],
+                  "RequestId": event["RequestId"],
+                  "LogicalResourceId": event["LogicalResourceId"],
+                  "Data": {}
+              }
+              data = json.dumps(response_body).encode("utf-8")
+              req = urllib.request.Request(
+                  event["ResponseURL"],
+                  data=data,
+                  headers={"content-type": "", "content-length": str(len(data))},
+                  method="PUT",
+              )
+              urllib.request.urlopen(req)
+
+          def handler(event, context):
+              if event["RequestType"] == "Delete":
+                  send_response(event, context, "SUCCESS")
+                  return
+
+              try:
+                  source_url = event["ResourceProperties"]["SourceUrl"]
+                  dest_bucket = event["ResourceProperties"]["DestBucket"]
+                  with urllib.request.urlopen(source_url) as response:
+                      zip_bytes = io.BytesIO(response.read())
+
+                  s3 = boto3.client("s3")
+                  with zipfile.ZipFile(zip_bytes) as archive:
+                      for name in archive.namelist():
+                          if name.endswith("/"):
+                              continue
+                          content = archive.read(name)
+                          content_type, _ = mimetypes.guess_type(name)
+                          if not content_type:
+                              content_type = "application/octet-stream"
+                          s3.put_object(
+                              Bucket=dest_bucket,
+                              Key=name,
+                              Body=content,
+                              ContentType=content_type,
+                          )
+
+                  send_response(event, context, "SUCCESS")
+              except Exception as exc:
+                  send_response(event, context, "FAILED", str(exc))
+
+  FrontendSeed:
+    Type: Custom::FrontendSeed
+    Properties:
+      ServiceToken: !GetAtt FrontendSeedFunction.Arn
+      SourceUrl: "https://workshop-demo-artifacts.s3.us-east-1.amazonaws.com/frontend/frontend.zip"
+      DestBucket: !Ref FrontendBucket
+
   ApiGatewayInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
