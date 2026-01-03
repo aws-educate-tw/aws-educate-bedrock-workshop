@@ -3,7 +3,7 @@
 本專案提供一組以 **大型語言模型（LLM）** 為核心的人生模擬遊戲 API。
 遊戲透過多個 API，逐步生成玩家背景、人生事件、事件結果與最終評分，營造沉浸式的互動體驗。
 
-系統於遊戲開始時建立一組 **session_id**，並將該局遊戲的基本狀態與隨機環境設定儲存於 **MongoDB** 中。
+系統於遊戲開始時建立一組 **session_id**，並將該局遊戲的基本狀態與隨機環境設定儲存於 **DynamoDB** 中。
 後續所有 API 呼叫皆透過 `session_id` 識別同一局人生模擬流程。
 
 ---
@@ -31,7 +31,7 @@
 * **Response 類型**：JSON
 * **Content-Type**：`application/json`
 * 所有 API 皆採用傳統 **Request / Response** 模式
-* 遊戲狀態由 **Server 端（MongoDB）** 管理，Client 透過 `session_id` 進行識別
+* 遊戲狀態由 **Server 端（DynamoDB）** 管理，Client 透過 `session_id` 進行識別
 
 ---
 
@@ -45,21 +45,21 @@
 
 初始化一局新遊戲，建立一組新的遊戲 session，
 隨機生成世界觀、玩家初始身份與本次人生模擬的核心目標，
-並將初始資料儲存至 MongoDB。
+並將初始資料儲存至 DynamoDB。
 
 ### Request Body
 
 ```json
 {
-  "model_id": "string"
+  "knowledge_base_id": "string"
 }
 ```
 
 ### 參數說明
 
-| 欄位       | 型別     | 說明         |
-| -------- | ------ | ---------- |
-| model_id | string | 使用的語言模型 ID |
+| 欄位              | 型別     | 說明                  |
+| --------------- | ------ | ------------------- |
+| knowledge_base_id | string | 使用的 Knowledge Base ID |
 
 ---
 
@@ -125,7 +125,7 @@
 ### 備註
 
 * 本 API 可於遊戲過程中 **多次呼叫**
-* 事件內容會依據 MongoDB 中的玩家狀態與人生摘要動態生成
+* 事件內容會依據 DynamoDB 中的玩家狀態與人生摘要動態生成
 * Server 端負責維持敘事連貫性
 
 ---
@@ -143,7 +143,7 @@
 {
   "session_id": "session_abc123",
   "event": { ... },
-  "selected_option_id": "A"
+  "selected_option": "A"
 }
 ```
 
@@ -170,7 +170,7 @@
 
 * 本 API 負責 **人生狀態轉移（State Transition）**
 * 所有屬性變化與副作用皆於此處處理
-* 更新後的狀態與摘要會寫回 MongoDB
+* 更新後的狀態與摘要會寫回 DynamoDB
 * `current_summary` 將作為下一次 `/generate-story` 的敘事上下文
 
 ---
@@ -285,7 +285,7 @@ DynamoDB 為無伺服器（serverless）NoSQL 服務，適合以 **session_id �
   "session_id": "session_abc123",
   "status": "active",
 
-  "model_id": "anthropic.claude-3-5-sonnet",
+  "knowledge_base_id": "kb_abc123",
 
   "world_context": {
     "era": "modern",
@@ -317,7 +317,7 @@ DynamoDB 為無伺服器（serverless）NoSQL 服務，適合以 **session_id �
     {
       "event_id": "event_001",
       "event_description": "你選擇了第一份工作。",
-      "selected_option_id": "A",
+      "selected_option": "A",
       "outcome_summary": "你獲得了穩定的收入。",
       "timestamp": "2025-12-22T14:40:00Z"
     }
@@ -342,7 +342,7 @@ DynamoDB 為無伺服器（serverless）NoSQL 服務，適合以 **session_id �
 | ------------ | ------ | ----------------------------- |
 | `session_id` | String | 遊戲 session 的唯一識別碼             |
 | `status`     | String | Session 狀態：`active` / `ended` |
-| `model_id`   | String | 本局使用的 LLM 模型 ID               |
+| `knowledge_base_id` | String | 本局使用的 Knowledge Base ID |
 
 ---
 
@@ -402,7 +402,7 @@ DynamoDB 為無伺服器（serverless）NoSQL 服務，適合以 **session_id �
 
 ---
 
-# 五、SAM Local 測試指令
+# 五、開發版（SAM Local / SAM Deploy）
 
 前置需求：已安裝 Docker 並啟動。
 
@@ -423,7 +423,7 @@ sam local start-api -t src/template/template.yaml --env-vars ./src/template/env.
 ```bash
 curl -X POST http://127.0.0.1:3000/generate-background \
   -H "Content-Type: application/json" \
-  -d '{"model_id":"us.amazon.nova-lite-v1:0"}'
+  -d '{"knowledge_base_id":"your-knowledge-base-id"}'
 ```
 
 ```bash
@@ -435,7 +435,7 @@ curl -X POST http://127.0.0.1:3000/generate-story \
 ```bash
 curl -X POST http://127.0.0.1:3000/resolve-event \
   -H "Content-Type: application/json" \
-  -d '{"session_id":"session_abc123","event":{},"selected_option_id":"A"}'
+  -d '{"session_id":"session_abc123","event":{},"selected_option":"A"}'
 ```
 
 ```bash
@@ -452,7 +452,7 @@ docker pull public.ecr.aws/lambda/nodejs:18-arm64
 
 ---
 
-# 六、部署到 AWS
+# 六、部署到 AWS（開發版）
 
 前置需求：已設定 AWS CLI/認證與 SAM CLI。
 
@@ -465,7 +465,7 @@ sam build -t src/template/template.yaml
 ## 2) 部署
 
 ```bash
-sam deploy --guided  --parameter-overrides KnowledgeBaseId={your knowledge base id}
+sam deploy --guided
 ```
 
 ## 3) 取得 API URL
@@ -477,4 +477,40 @@ sam deploy --guided  --parameter-overrides KnowledgeBaseId={your knowledge base 
 aws cloudformation describe-stacks \
   --stack-name bedrock-workshop-stack \
   --query "Stacks[0].Outputs"
+```
+
+---
+
+# 七、Workshop 版（ZIP + S3 + Infrastructure Composer）
+
+Workshop 版會先把 Lambda 打包成 zip 上傳到 S3，並在模板裡直接指定 `CodeUri`，方便參加者匯入 Infrastructure Composer 直接建立自己的專案。
+
+## 1) 打包並上傳 Lambda
+
+```bash
+./scripts/package-lambda.sh <s3-bucket> <s3-key-prefix> [region]
+```
+
+範例：
+
+```bash
+./scripts/package-lambda.sh workshop-demo-artifacts lambda us-east-1
+```
+
+## 2) 更新模板中的 CodeUri
+
+打包完成後，請更新 `archive/template.lambda-zip.yaml` 的 `CodeUri`：
+
+```yaml
+CodeUri: s3://workshop-demo-artifacts/lambda/lambda.zip
+```
+
+## 3) 部署（或匯入 Infrastructure Composer）
+
+```bash
+aws cloudformation deploy \
+  --template-file archive/template.lambda-zip.yaml \
+  --stack-name workshop-demo \
+  --region us-east-1 \
+  --capabilities CAPABILITY_IAM
 ```
