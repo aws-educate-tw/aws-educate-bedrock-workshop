@@ -164,6 +164,75 @@ Resources:
             Action: s3:GetObject
             Resource: !Sub "${FrontendBucket.Arn}/*"
 
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        HttpVersion: http2
+        DefaultRootObject: index.html
+        Origins:
+          - Id: FrontendS3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            S3OriginConfig: {}
+          - Id: ApiOrigin
+            DomainName: !Sub "${ApiGW}.execute-api.${AWS::Region}.amazonaws.com"
+            OriginPath: "/Prod"
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: FrontendS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        CacheBehaviors:
+          - PathPattern: "api/*"
+            TargetOriginId: ApiOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Type
+              Cookies:
+                Forward: all
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt ApiPathRewriteFunction.FunctionARN
+
+  ApiPathRewriteFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub "${AWS::StackName}-api-path-rewrite"
+      AutoPublish: true
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri || '';
+          if (uri.startsWith('/api/')) {
+            request.uri = uri.substring(4) || '/';
+          } else if (uri === '/api') {
+            request.uri = '/';
+          }
+          return request;
+        }
+      FunctionConfig:
+        Comment: "Strip /api prefix before sending to API Gateway"
+        Runtime: cloudfront-js-1.0
   FrontendSeedRole:
     Type: AWS::IAM::Role
     Properties:
@@ -277,3 +346,6 @@ Outputs:
   FrontendUrl:
     Description: "Public website URL for the frontend"
     Value: !GetAtt FrontendBucket.WebsiteURL
+  CloudFrontUrl:
+    Description: "CloudFront distribution URL"
+    Value: !Sub "https://${FrontendDistribution.DomainName}"
