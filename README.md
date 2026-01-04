@@ -32,6 +32,7 @@
 * **Content-Type**：`application/json`
 * 所有 API 皆採用傳統 **Request / Response** 模式
 * 遊戲狀態由 **Server 端（DynamoDB）** 管理，Client 透過 `session_id` 進行識別
+* 回應中的 `image` 欄位為 Base64 PNG（可能為 `null`）
 
 ---
 
@@ -71,10 +72,13 @@
   "background": "世界觀與時代背景描述",
   "player_identity": {
     "age": 22,
+    "gender": "女",
+    "appearance": "短髮、綠眼、戴圓框眼鏡",
     "profession": "應屆畢業生",
     "initial_traits": ["理性", "內向"]
   },
-  "life_goal": "在穩定生活與自我實現之間找到平衡"
+  "life_goal": "在穩定生活與自我實現之間找到平衡",
+  "image": "base64_png_string"
 }
 ```
 
@@ -83,6 +87,7 @@
 * 每一局遊戲 **僅需呼叫一次**
 * `session_id` 為後續所有 API 的識別依據
 * 回傳內容為完整結果，一次取得
+* `image` 為 Base64 PNG，可直接用於前端顯示
 
 ---
 
@@ -111,14 +116,22 @@
   "event_description": "你收到一份高薪但工時極長的工作邀請。",
   "options": [
     {
-      "option_id": "A",
+      "option_id": "option_1",
       "description": "接受這份工作"
     },
     {
-      "option_id": "B",
+      "option_id": "option_2",
       "description": "拒絕，維持目前生活"
     }
-  ]
+  ],
+  "image": "base64_png_string",
+  "game_progress": {
+    "turn": 2,
+    "total_turns": 8,
+    "phase": "學院初期",
+    "phase_progress": "學院初期（2/2）",
+    "turns_left": 6
+  }
 }
 ```
 
@@ -127,6 +140,9 @@
 * 本 API 可於遊戲過程中 **多次呼叫**
 * 事件內容會依據 DynamoDB 中的玩家狀態與人生摘要動態生成
 * Server 端負責維持敘事連貫性
+* `game_progress.total_turns` 目前為 8（由 `src/lambda/config/gamePhases.js` 控制）
+* `image` 為 Base64 PNG，可直接用於前端顯示
+* 若遊戲已結束，會回傳 `should_generate_result: true`
 
 ---
 
@@ -142,8 +158,15 @@
 ```json
 {
   "session_id": "session_abc123",
-  "event": { ... },
-  "selected_option": "A"
+  "event": {
+    "event_id": "event_1024",
+    "event_description": "你收到一份高薪但工時極長的工作邀請。",
+    "options": [
+      { "option_id": "option_1", "description": "接受這份工作" },
+      { "option_id": "option_2", "description": "拒絕，維持目前生活" }
+    ]
+  },
+  "selected_option": "option_1"
 }
 ```
 
@@ -157,12 +180,22 @@
   "updated_player_state": {
     "age": 26,
     "career": "資深工程師",
-    "finance": 80,
-    "health": 55,
+    "wisdom": 60,
+    "wealth": 80,
     "relationships": 40,
+    "career_development": 75,
+    "wellbeing": 55,
     "traits": ["理性", "內向", "工作導向"]
   },
-  "current_summary": "你在職涯上快速成長，但健康與人際關係開始承受壓力。"
+  "stat_changes": [
+    {
+      "stat": "wealth",
+      "change": 10,
+      "reason": "高薪工作帶來收入提升"
+    }
+  ],
+  "current_summary": "你在職涯上快速成長，但健康與人際關係開始承受壓力。",
+  "image": "base64_png_string"
 }
 ```
 
@@ -172,6 +205,7 @@
 * 所有屬性變化與副作用皆於此處處理
 * 更新後的狀態與摘要會寫回 DynamoDB
 * `current_summary` 將作為下一次 `/generate-story` 的敘事上下文
+* `image` 為 Base64 PNG，可直接用於前端顯示
 
 ---
 
@@ -197,14 +231,45 @@
 ```json
 {
   "summary": "你在職涯上取得成功，但在人際與健康上付出代價。",
-  "radar_scores": {
-    "financial": 85,
-    "career": 90,
-    "health": 45,
+  "final_scores": {
+    "wisdom": 85,
+    "wealth": 90,
     "relationships": 40,
-    "self_fulfillment": 70
+    "career_development": 70,
+    "wellbeing": 45
   },
-  "ending_type": "高成就但失衡的人生"
+  "achievements": [
+    {
+      "title": "學院之星",
+      "description": "在學院階段表現卓越，奠定未來基礎",
+      "icon": "⭐"
+    },
+    {
+      "title": "社會新星",
+      "description": "在職涯初期快速成長，獲得肯定",
+      "icon": "🚀"
+    }
+  ],
+  "key_decisions": [
+    {
+      "event_description": "你選擇進入幻霧學園。",
+      "decision": "接受錄取",
+      "impact": "開啟魔法人生的新篇章"
+    },
+    {
+      "event_description": "你選擇專研黑魔法。",
+      "decision": "加入禁忌研究小組",
+      "impact": "獲得強大力量，但人際關係受損"
+    },
+    {
+      "event_description": "你選擇成為魔法導師。",
+      "decision": "留在學院任教",
+      "impact": "影響下一代魔法學徒的命運"
+    }
+  ],
+  "ending_type": "高成就但失衡的人生",
+  "ending_title": "榮耀與代價",
+  "image": "base64_png_string"
 }
 ```
 
@@ -213,6 +278,7 @@
 * 僅在遊戲結束時呼叫一次
 * 雷達圖分數範圍為 0–100
 * 適合用於前端視覺化呈現（Radar Chart / Canvas）
+* `image` 為 Base64 PNG，可直接用於前端顯示
 
 ---
 
@@ -294,6 +360,8 @@ DynamoDB 為無伺服器（serverless）NoSQL 服務，適合以 **session_id �
 
   "player_identity": {
     "age": 22,
+    "gender": "女",
+    "appearance": "短髮、綠眼、戴圓框眼鏡",
     "profession": "應屆畢業生",
     "initial_traits": ["理性", "內向"]
   },
@@ -303,9 +371,11 @@ DynamoDB 為無伺服器（serverless）NoSQL 服務，適合以 **session_id �
   "player_state": {
     "age": 22,
     "career": "學生",
-    "finance": 50,
-    "health": 80,
+    "wisdom": 50,
+    "wealth": 50,
     "relationships": 60,
+    "career_development": 50,
+    "wellbeing": 80,
     "traits": ["理性", "內向"]
   },
 
