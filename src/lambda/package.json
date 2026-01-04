@@ -17,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-bedrock-agent-runtime": "^3.485.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.485.0",
     "@aws-sdk/client-dynamodb": "^3.485.0",
     "@langchain/aws": "^0.1.0",
     "@langchain/core": "^0.3.0",
