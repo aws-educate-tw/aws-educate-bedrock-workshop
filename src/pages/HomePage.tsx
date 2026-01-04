@@ -88,14 +88,14 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="prophet-page" style={{ backgroundImage: 'url(https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/background_cznh7q.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+    <div className="prophet-page min-h-screen flex flex-col" style={{ backgroundImage: 'url(https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/background_cznh7q.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
       {/* 背景音樂 */}
       <audio ref={audioRef} loop preload="auto">
         <source src="/hedwigs-theme.mp3" type="audio/mpeg" />
       </audio>
       
       {/* 預言家日報頭版 */}
-      <header className="text-center py-8 border-b-4 border-[var(--prophet-border)]">
+      <header className="text-center py-4 border-b-4 border-[var(--prophet-border)]">
         <div className="mb-4">
           <div className="flex items-center justify-center gap-4 mb-2">
             <div className="text-xs prophet-text tracking-widest">Vol. CDXII</div>
@@ -141,19 +141,20 @@ export const HomePage: React.FC = () => {
           <div className="h-px bg-[var(--prophet-accent)] flex-1 max-w-32"></div>
         </div>
       </header>
+      
       {/* 主要版面 - 三欄報紙布局 */}
-      <div className="flex-1 p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="flex-1 p-4 flex items-stretch pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full max-h-[calc(100vh-280px)]">
           {/* 左欄：魔法照片 */}
-          <div className="prophet-article">
-            <h3 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2">
+          <div className="prophet-article flex flex-col">
+            <h3 className="prophet-headline text-lg mb-2 border-b border-[var(--prophet-border)] pb-1">
               霍格華茲魔法學院
             </h3>
-            <div className="prophet-photo mb-4 group cursor-pointer">
+            <div className="prophet-photo group cursor-pointer flex-1">
               <motion.img 
                 src="https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/home_nufsc7.png"
                 alt="魔法城堡"
-                className="w-full h-64 object-cover transition-all duration-500"
+                className="w-full h-full max-h-[calc(100vh-300px)] object-cover transition-all duration-500"
                 whileHover={{ 
                   rotateY: [-5, 5, -5, 5, 0],
                   transition: { duration: 0.6, ease: "easeInOut" }
@@ -164,28 +165,23 @@ export const HomePage: React.FC = () => {
                 whileHover={{ opacity: 0.3 }}
               />
             </div>
-            <div className="prophet-small-text leading-tight">
-              據可靠消息指出，霍格華茲魔法學院最新引進了人工智慧魔法技術，
-              能夠模擬巫師的完整人生歷程。這項突破性的魔法創新將為年輕巫師
-              提供前所未有的人生預測體驗。
-            </div>
           </div>
           
           {/* 中欄：主要文章 */}
-          <div className="prophet-article">
-            <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
+          <div className="prophet-article flex flex-col">
+            <h2 className="prophet-headline text-2xl mb-2 border-b-2 border-[var(--prophet-border)] pb-1">
               開始您的魔法人生
             </h2>
-            <div className="prophet-divider mb-4"></div>
+            <div className="prophet-divider mb-2"></div>
             
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="space-y-2">
+            <form className="space-y-3 flex-1 flex flex-col justify-between" onSubmit={handleSubmit}>
+              <div className="space-y-1">
                 <label className="block prophet-text font-bold text-sm">
                   魔法模型識別碼
                 </label>
                 <input 
                   type="text" required
-                  className="w-full prophet-input px-3 py-2 text-sm"
+                  className="w-full prophet-input px-3 py-1.5 text-sm"
                   placeholder="例如: claude-3-sonnet"
                   value={userData.id}
                   onChange={e => setUserData({...userData, id: e.target.value})}
@@ -193,22 +189,7 @@ export const HomePage: React.FC = () => {
                 />
               </div>
               
-              <div className="space-y-2">
-                <label className="block prophet-text font-bold text-sm">
-                  魔法 API 連結
-                </label>
-                <input 
-                  type="url"
-                  className="w-full prophet-input px-3 py-2 text-sm"
-                  placeholder="https://... (留空使用模擬資料)"
-                  value={userData.url}
-                  onChange={e => setUserData({...userData, url: e.target.value})}
-                  disabled={loading}
-                />
-                <p className="prophet-small-text opacity-70">
-                  若未填寫 API URL，將使用模擬資料進行測試
-                </p>
-              </div>
+              <div className="flex-1 min-h-[100px]"></div>
               
               {error && (
                 <div className="border-2 border-red-800 bg-red-50 p-3">
@@ -219,7 +200,7 @@ export const HomePage: React.FC = () => {
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full prophet-button py-3 px-6 disabled:opacity-50"
+                className="w-full prophet-button py-2 px-4 disabled:opacity-50"
               >
                 {loading ? '正在準備您的魔法人生...' : '開始人生模擬'}
               </button>
@@ -227,9 +208,9 @@ export const HomePage: React.FC = () => {
           </div>
           
           {/* 右欄：魔法部公告與資訊 */}
-          <div className="space-y-4">
-            <div className="prophet-article">
-              <h4 className="prophet-headline text-sm mb-3 border-b border-[var(--prophet-border)] pb-2">
+          <div className="flex flex-col">
+            <div className="prophet-article mb-2">
+              <h4 className="prophet-headline text-sm mb-2 border-b border-[var(--prophet-border)] pb-1">
                 魔法部公告
               </h4>
               <div className="prophet-small-text">
@@ -239,11 +220,11 @@ export const HomePage: React.FC = () => {
               </div>
             </div>
             
-            <div className="prophet-article">
-              <h4 className="prophet-headline text-sm mb-3 border-b border-[var(--prophet-border)] pb-2">
+            <div className="prophet-article flex-1">
+              <h4 className="prophet-headline text-sm mb-2 border-b border-[var(--prophet-border)] pb-1">
                 使用說明
               </h4>
-              <div className="prophet-small-text space-y-2">
+              <div className="prophet-small-text space-y-1">
                 <p>1. 輸入您的魔法模型識別碼</p>
                 <p>2. 可選擇性提供 API 連結</p>
                 <p>3. 點擊開始按鈕啟動模擬</p>
@@ -251,25 +232,11 @@ export const HomePage: React.FC = () => {
                 <p>5. 獲得完整的人生報告</p>
               </div>
             </div>
-            
-            <div className="prophet-article">
-              <h4 className="prophet-headline text-sm mb-3 border-b border-[var(--prophet-border)] pb-2">
-                魔法師推薦
-              </h4>
-              <div className="prophet-small-text text-center">
-                「每個巫師都應該體驗一次<br/>完整的人生模擬魔法」<br/>
-                <em>— 鄧不利多校長</em>
-              </div>
-            </div>
           </div>
         </div>
       </div>
-      {/* 報紙頁腳 */}
-      <footer className="border-t-2 border-[var(--prophet-border)] py-4 text-center bg-transparent">
-        <div className="prophet-small-text opacity-60">
-          © 2026 The Daily Prophet - Bedrock Workshop | AWS Educate
-        </div>
-      </footer>
+      
+
     </div>
   );
 };
