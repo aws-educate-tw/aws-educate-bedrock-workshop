@@ -1,8 +1,20 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, RefreshCcw, Facebook, Twitter, Instagram, Link, Calendar, Award, Clock, Trophy } from 'lucide-react';
-import { useAppStore } from '../store';
-import { exportToJPG } from '../services/export';
+import {
+  ArrowLeft,
+  Award,
+  Calendar,
+  Clock,
+  Download,
+  Facebook,
+  Instagram,
+  Link,
+  RefreshCcw,
+  Trophy,
+  Twitter,
+} from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { exportToJPG } from "../services/export";
+import { useAppStore } from "../store";
 
 export const ReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -10,73 +22,84 @@ export const ReportPage: React.FC = () => {
   const [exporting, setExporting] = useState(false);
 
   if (!summaryState) {
-    navigate('/');
+    navigate("/");
     return null;
   }
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      await exportToJPG('export-area', 'my-life-report');
-      alert('匯出成功！');
+      await exportToJPG("export-area", "my-life-report");
+      alert("匯出成功！");
     } catch (error) {
-      alert(`匯出失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
+      alert(`匯出失敗: ${error instanceof Error ? error.message : "未知錯誤"}`);
     } finally {
       setExporting(false);
     }
   };
 
   const handleRestart = () => {
-    if (confirm('確定要重新開始嗎？')) {
+    if (confirm("確定要重新開始嗎？")) {
       reset();
-      navigate('/');
+      navigate("/");
     }
   };
 
   const handleFacebookShare = () => {
     const url = encodeURIComponent(window.location.href);
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      "_blank"
+    );
   };
 
   const handleTwitterShare = () => {
     const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent(`我的 AI 人生模擬結果：${summaryState.lifeScore}/100 分！`);
-    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+    const text = encodeURIComponent(
+      `我的 AI 人生模擬結果：${summaryState.lifeScore}/100 分！`
+    );
+    window.open(
+      `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
+      "_blank"
+    );
   };
 
   const handleInstagramShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    alert('連結已複製，可貼到 Instagram！');
+    alert("連結已複製，可貼到 Instagram！");
     setTimeout(() => {
-      window.open('https://www.instagram.com/', '_blank');
+      window.open("https://www.instagram.com/", "_blank");
     }, 1000);
   };
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      alert('連結已複製到剪貼板！');
+      alert("連結已複製到剪貼板！");
     } catch (err) {
-      alert('複製失敗，請手動複製');
+      alert("複製失敗，請手動複製");
     }
   };
 
-  const currentDate = new Date().toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  const currentDate = new Date().toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   return (
     <div className="min-h-screen bg-[var(--parchment-bg)] relative magical-aged">
       <div className="absolute inset-0 opacity-5 magical-print">
-        <div className="w-full h-full" style={{
-          backgroundImage: `
+        <div
+          className="w-full h-full"
+          style={{
+            backgroundImage: `
             linear-gradient(0deg, transparent 24%, rgba(201, 184, 150, 0.1) 25%, rgba(201, 184, 150, 0.1) 26%, transparent 27%, transparent 74%, rgba(201, 184, 150, 0.1) 75%, rgba(201, 184, 150, 0.1) 76%, transparent 77%, transparent),
             linear-gradient(90deg, transparent 24%, rgba(201, 184, 150, 0.1) 25%, rgba(201, 184, 150, 0.1) 26%, transparent 27%, transparent 74%, rgba(201, 184, 150, 0.1) 75%, rgba(201, 184, 150, 0.1) 76%, transparent 77%, transparent)
           `,
-          backgroundSize: '50px 50px'
-        }} />
+            backgroundSize: "50px 50px",
+          }}
+        />
       </div>
 
       <div className="relative z-10">
@@ -94,41 +117,57 @@ export const ReportPage: React.FC = () => {
                 {currentDate} • 第 {Math.floor(Math.random() * 1000) + 1} 期
               </div>
             </div>
-            
+
             <div className="flex justify-between items-center pt-4 border-t border-[var(--parchment-border)]">
               <button
-                onClick={() => navigate('/summary')}
+                onClick={() => navigate("/summary")}
                 className="flex items-center gap-2 px-4 py-2 magical-button"
               >
                 <ArrowLeft size={16} />
                 返回總結
               </button>
-              
+
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 border-2 border-[var(--parchment-border)] p-1">
-                  <button onClick={handleFacebookShare} className="p-2 hover:bg-[var(--parchment-border)] transition-all" title="Facebook">
+                  <button
+                    onClick={handleFacebookShare}
+                    className="p-2 hover:bg-[var(--parchment-border)] transition-all"
+                    title="Facebook"
+                  >
                     <Facebook size={16} className="text-[var(--ink-brown)]" />
                   </button>
-                  <button onClick={handleTwitterShare} className="p-2 hover:bg-[var(--parchment-border)] transition-all" title="X (Twitter)">
+                  <button
+                    onClick={handleTwitterShare}
+                    className="p-2 hover:bg-[var(--parchment-border)] transition-all"
+                    title="X (Twitter)"
+                  >
                     <Twitter size={16} className="text-[var(--ink-brown)]" />
                   </button>
-                  <button onClick={handleInstagramShare} className="p-2 hover:bg-[var(--parchment-border)] transition-all" title="Instagram">
+                  <button
+                    onClick={handleInstagramShare}
+                    className="p-2 hover:bg-[var(--parchment-border)] transition-all"
+                    title="Instagram"
+                  >
                     <Instagram size={16} className="text-[var(--ink-brown)]" />
                   </button>
-                  <button onClick={handleCopyLink} className="p-2 hover:bg-[var(--parchment-border)] transition-all" title="複製連結">
+                  <button
+                    onClick={handleCopyLink}
+                    className="p-2 hover:bg-[var(--parchment-border)] transition-all"
+                    title="複製連結"
+                  >
                     <Link size={16} className="text-[var(--ink-brown)]" />
                   </button>
                 </div>
-                
+
                 <button
                   onClick={handleExport}
                   disabled={exporting}
                   className="flex items-center gap-2 px-4 py-2 magical-button disabled:opacity-50"
                 >
                   <Download size={16} />
-                  {exporting ? '匯出中...' : '下載 JPG'}
+                  {exporting ? "匯出中..." : "下載 JPG"}
                 </button>
-                
+
                 <button
                   onClick={handleRestart}
                   className="flex items-center gap-2 px-4 py-2 border-2 border-red-800 bg-red-50 hover:bg-red-100 transition-all text-red-800"
@@ -151,12 +190,15 @@ export const ReportPage: React.FC = () => {
                   <span className="magical-subtitle">解鎖的人生里程碑</span>
                 </div>
               </div>
-              
+
               <div className="max-h-[600px] overflow-y-auto magical-scrollbar">
                 {summaryState.achievements.length > 0 ? (
                   <div className="space-y-4">
                     {summaryState.achievements.map((achievement, index) => (
-                      <div key={index} className="border-2 border-[var(--parchment-border)] p-4 bg-[var(--parchment-light)]">
+                      <div
+                        key={index}
+                        className="border-2 border-[var(--parchment-border)] p-4 bg-[var(--parchment-light)]"
+                      >
                         <div className="flex gap-3 items-start">
                           {achievement.iconUrl ? (
                             <img
@@ -198,13 +240,16 @@ export const ReportPage: React.FC = () => {
                   <span className="magical-subtitle">影響命運的重要抉擇</span>
                 </div>
               </div>
-              
+
               <div className="max-h-[600px] overflow-y-auto magical-scrollbar">
                 <div className="space-y-6 relative">
                   <div className="absolute left-6 top-0 bottom-0 w-px bg-[var(--parchment-border)]"></div>
-                  
+
                   {summaryState.keyChoices.map((choice, index) => (
-                    <div key={index} className="flex gap-4 items-start relative">
+                    <div
+                      key={index}
+                      className="flex gap-4 items-start relative"
+                    >
                       <div className="bg-[var(--ink-dark)] text-[var(--parchment-light)] w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 relative z-10">
                         {index + 1}
                       </div>
@@ -244,7 +289,10 @@ export const ReportPage: React.FC = () => {
               </div>
 
               {summaryState.finalImageUrl && (
-                <div className="magical-photo mb-6" style={{ maxWidth: '300px' }}>
+                <div
+                  className="magical-photo mb-6"
+                  style={{ maxWidth: "300px" }}
+                >
                   <img
                     src={summaryState.finalImageUrl}
                     alt="人生終章"

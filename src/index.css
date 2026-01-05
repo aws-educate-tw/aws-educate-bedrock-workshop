@@ -1073,7 +1073,6 @@ body {
 
 /* 預言家日報照片框 */
 .prophet-photo {
-  border: 2px solid var(--prophet-border);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   filter: sepia(20%) contrast(1.2) brightness(0.95) grayscale(30%);
 }
