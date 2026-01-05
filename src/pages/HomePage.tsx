@@ -1,49 +1,45 @@
 import { motion } from "framer-motion";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppStore } from "../store";
+import { useSession } from "../hooks/useSession";
 
+/**
+ * 首頁：保留原本的三欄報紙排版
+ * 整合新的 /generate-background API 邏輯
+ *
+ * 流程：
+ * 1. 用戶在中欄輸入「知識庫 ID」（原 API 連結欄位）
+ * 2. 點擊「開始人生模擬」後呼叫 POST /generate-background
+ * 3. 成功後自動導向 /game?sessionId=<sessionId>
+ */
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { setConfig, loading, error, setCurrentSession } = useAppStore();
-  const [userData, setUserData] = useState({
-    id: "anthropic.claude-3-sonnet-20240229-v1:0",
-    url: "",
-  });
+  const { sessionId, loading, error, initializeSession } = useSession();
+
   const audioRef = useRef<HTMLAudioElement>(null);
   const [titleAnimated, setTitleAnimated] = useState(false);
+  const [knowledgeBaseId, setKnowledgeBaseId] = useState(
+    (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) || ""
+  );
 
   useEffect(() => {
     // 頁面載入時滾動到頂部
     window.scrollTo(0, 0);
 
-    // 播放哈利波特主題曲
+    // 播放背景音樂（可選，失敗不報錯）
     const playAudio = async () => {
       try {
         if (audioRef.current) {
           audioRef.current.volume = 0.3;
-          // 需要用戶互動才能播放音頻
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
-            await playPromise;
+            await playPromise.catch(() => {
+              // 自動播放失敗，忽略
+            });
           }
         }
-      } catch (error) {
-        console.log("音頻播放失敗:", error);
-        // 如果自動播放失敗，等待用戶點擊
-        const handleUserInteraction = async () => {
-          try {
-            if (audioRef.current) {
-              await audioRef.current.play();
-              document.removeEventListener("click", handleUserInteraction);
-            }
-          } catch (e) {
-            console.log("用戶互動後播放失敗:", e);
-          }
-        };
-        document.addEventListener("click", handleUserInteraction, {
-          once: true,
-        });
+      } catch {
+        // 音頻播放失敗，忽略
       }
     };
 
@@ -57,35 +53,32 @@ export const HomePage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  /**
+   * 成功初始化後自動導向 GamePage
+   */
+  useEffect(() => {
+    if (sessionId && !loading && !error) {
+      const timer = setTimeout(() => {
+        navigate(`/game?sessionId=${sessionId}`);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [sessionId, loading, error, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userData.id.trim()) {
-      alert("請填寫 Model ID");
-      return;
+
+    const kbId =
+      knowledgeBaseId.trim() ||
+      (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ||
+      "default-kb";
+
+    try {
+      await initializeSession(kbId);
+    } catch (err) {
+      console.error("Failed to initialize session:", err);
+      // 錯誤已在 hook 中設定，UI 會顯示
     }
-
-    // 直接設置配置並跳轉到遊戲頁面
-    setConfig(userData.id.trim(), userData.url.trim());
-
-    // 創建預設的 session
-    const defaultSession = {
-      sessionId: "default-session",
-      modelId: userData.id.trim(),
-      background: "你出生在一個普通的中產階級家庭，父母都是上班族。",
-      lifeGoal: "成為一個對社會有貢獻的人，同時擁有幸福的家庭生活。",
-      playerState: {
-        age: 25,
-        career: 50,
-        finance: 40,
-        health: 80,
-        relationships: 70,
-        traits: ["好奇心旺盛", "善良"],
-      },
-      currentSummary: "你的人生正在展開...",
-    };
-
-    setCurrentSession(defaultSession);
-    navigate("/game");
   };
 
   return (
@@ -157,6 +150,7 @@ export const HomePage: React.FC = () => {
           <div className="h-px bg-[var(--prophet-accent)] flex-1 max-w-32"></div>
         </div>
       </header>
+
       {/* 主要版面 - 三欄報紙布局 */}
       <div className="flex-1 p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -180,11 +174,6 @@ export const HomePage: React.FC = () => {
                 whileHover={{ opacity: 0.3 }}
               />
             </div>
-            {/* <div className="prophet-small-text leading-tight">
-              據可靠消息指出，霍格華茲魔法學院最新引進了人工智慧魔法技術，
-              能夠模擬巫師的完整人生歷程。這項突破性的魔法創新將為年輕巫師
-              提供前所未有的人生預測體驗。
-            </div> */}
           </div>
 
           {/* 中欄：主要文章 */}
@@ -197,24 +186,31 @@ export const HomePage: React.FC = () => {
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <label className="block prophet-text font-bold text-sm">
-                  魔法 API 連結
+                  麻法知識庫 ID
                 </label>
                 <input
                   type="text"
-                  id="apiUrl"
                   className="w-full prophet-input px-3 py-2 text-sm"
-                  placeholder="例如：https://3jdgsl5ne3.execute-api.us-east-1.amazonaws.com/Prod"
-                  value={userData.url}
-                  onChange={(e) =>
-                    setUserData({ ...userData, url: e.target.value })
-                  }
+                  placeholder="留空將使用預設值"
+                  value={knowledgeBaseId}
+                  onChange={(e) => setKnowledgeBaseId(e.target.value)}
                   disabled={loading}
                 />
               </div>
 
               {error && (
                 <div className="border-2 border-red-800 bg-red-50 p-3">
-                  <p className="prophet-text text-red-800 text-sm">{error}</p>
+                  <p className="prophet-text text-red-800 text-sm">
+                    {error.errorType === "timeout" &&
+                      "連線逾時，請檢查網路連線"}
+                    {error.errorType === "4xx" && `請求錯誤：${error.message}`}
+                    {error.errorType === "5xx" &&
+                      "後端服務暫時故障，請稍後重試"}
+                    {error.errorType === "network" &&
+                      "網路連線失敗，請檢查您的網路設定"}
+                    {error.errorType === "parse" &&
+                      "服務回應格式錯誤，請稍後重試"}
+                  </p>
                 </div>
               )}
 
@@ -248,29 +244,16 @@ export const HomePage: React.FC = () => {
                 使用說明
               </h4>
               <div className="prophet-small-text space-y-2">
-                <p>1. 輸入您的魔法模型識別碼</p>
-                <p>2. 可選擇性提供 API 連結</p>
-                <p>3. 點擊開始按鈕啟動模擬</p>
-                <p>4. 跟隨指引完成人生選擇</p>
-                <p>5. 獲得完整的人生報告</p>
+                <p>1. 填寫知識庫 ID</p>
+                <p>2. 點擊開始按鈕啟動模擬</p>
+                <p>3. 跟隨指引完成人生選擇</p>
+                <p>4. 獲得完整的人生報告</p>
               </div>
             </div>
-
-            {/* <div className="prophet-article">
-              <h4 className="prophet-headline text-sm mb-3 border-b border-[var(--prophet-border)] pb-2">
-                魔法師推薦
-              </h4>
-              <div className="prophet-small-text text-center">
-                「每個巫師都應該體驗一次
-                <br />
-                完整的人生模擬魔法」
-                <br />
-                <em>— 鄧不利多校長</em>
-              </div>
-            </div> */}
           </div>
         </div>
       </div>
+
       {/* 報紙頁腳 */}
       <footer className="border-t-2 border-[var(--prophet-border)] py-4 text-center bg-transparent">
         <div className="prophet-small-text opacity-60">

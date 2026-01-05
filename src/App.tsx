@@ -1,10 +1,9 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { HomePage } from './pages/HomePage';
-import { GamePage } from './pages/GamePage';
-import { SummaryPage } from './pages/SummaryPage';
-import { AchievementPage } from './pages/AchievementPage';
-import { ReportPage } from './pages/ReportPage';
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { AchievementPage } from "./pages/AchievementPage";
+import { GamePage } from "./pages/GamePage";
+import { HomePage } from "./pages/HomePage";
+import { ReportPage } from "./pages/ReportPage";
+import { SummaryPage } from "./pages/SummaryPage";
 
 function App() {
   return (

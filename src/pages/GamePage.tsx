@@ -64,7 +64,6 @@ export const GamePage: React.FC = () => {
     setSummaryState,
   } = useAppStore();
 
-  const [typingComplete, setTypingComplete] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<any>(
     currentSession?.currentEvent
   );
@@ -160,7 +159,6 @@ export const GamePage: React.FC = () => {
     if (eventIndex < mockEvents.length) {
       const selectedEvent = mockEvents[eventIndex];
       setCurrentEvent(selectedEvent);
-      setTypingComplete(false);
 
       // ✅ 新事件開始：恢復貼底，並先捲到底（像聊天新訊息）
       setStickToBottom(true);
@@ -255,35 +253,6 @@ export const GamePage: React.FC = () => {
     setFreeInput("");
   };
 
-  const handleQuickFinish = async () => {
-    const mockSummary = {
-      lifeScore: 75,
-      radar: {
-        wisdom: 80,
-        wealth: 65,
-        relationship: 90,
-        career: 70,
-        health: 80,
-      },
-      finalSummaryText:
-        "你度過了充實而有意義的一生。從小就展現出的善良和智慧，讓你在人生的各個階段都能做出正確的選擇。你重視人際關係，也不忘記持續學習和成長。",
-      achievements: [
-        { title: "智慧者", desc: "在人生中展現出卓越的智慧" },
-        { title: "人際達人", desc: "擁有良好的人際關係網絡" },
-      ],
-      keyChoices:
-        eventHistory.length > 0
-          ? eventHistory
-          : [
-              "童年時選擇幫助害羞的同學，培養了同理心",
-              "學生時期專注學業，奠定了知識基礎",
-              "成年後選擇穩定的工作，重視工作生活平衡",
-            ],
-    };
-    setSummaryState(mockSummary);
-    navigate("/summary");
-  };
-
   if (!currentSession) {
     const defaultSession: GameSession = {
       sessionId: "default-session",
@@ -349,11 +318,9 @@ export const GamePage: React.FC = () => {
                 style={{ maxWidth: "240px" }}
               >
                 <ImageWithFallback
-                  src={undefined}
+                  base64={undefined}
                   alt="遊戲場景"
                   className="w-full h-full"
-                  aspectRatio="4:5"
-                  fallbackType="scene"
                 />
               </div>
 
@@ -438,7 +405,6 @@ export const GamePage: React.FC = () => {
                 {currentEvent ? (
                   <Typewriter
                     text={currentEvent.event_description}
-                    onComplete={() => setTypingComplete(true)}
                     onTick={scrollEventToBottomIfNeeded}
                   />
                 ) : (
