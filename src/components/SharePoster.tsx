@@ -50,7 +50,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({
       </div>
 
       {/* 上半部：角色圖片 */}
-      <div className="p-4">
+      <div className="pt-4 px-4">
         <div className="prophet-photo mx-auto mb-4">
           <Base64Image
             base64={finalImageUrl}
@@ -60,11 +60,13 @@ export const SharePoster: React.FC<SharePosterProps> = ({
         </div>
 
         {/* 人生分數 */}
-        <div className="text-center mb-4">
-          <div className="text-4xl font-black text-[var(--prophet-dark)] mb-1 prophet-title">
-            {lifeScore}
+        <div className="text-center">
+          <div className="inline-flex items-baseline gap-2 text-[var(--prophet-dark)] mb-1">
+            <span className="text-4xl font-black prophet-title">
+              {lifeScore}
+            </span>
+            <span className="prophet-small-text font-medium"> / 100</span>
           </div>
-          <div className="prophet-small-text font-medium">人生總分 / 100</div>
         </div>
       </div>
 

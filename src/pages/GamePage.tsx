@@ -501,7 +501,6 @@ export const GamePage: React.FC = () => {
         </div>
       </div>
 
-      {/* 錯誤訊息：外層不滾，所以最好把錯誤放在版面內，避免被裁 */}
       {error && (
         <div className="mx-6 mb-4 border-2 border-red-800 bg-red-50 p-4">
           <p className="prophet-text text-red-800 text-sm mb-2">{error}</p>

@@ -157,7 +157,7 @@ export const AchievementPage: React.FC = () => {
       </header>
 
       <div className="p-6">
-        <div className="grid grid-cols-7 gap-6 h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-7 gap-6 h-[calc(95vh-200px)]">
           <div className="col-span-2">
             <div className="prophet-article h-full">
               <h2 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2 flex items-center gap-2">
