@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ChevronRight, FileText, Send } from "lucide-react";
+import { ChevronRight, Send } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ImageWithFallback } from "../components/ImageWithFallback";
@@ -71,16 +71,12 @@ export const GamePage: React.FC = () => {
   const [eventHistory, setEventHistory] = useState<string[]>([]);
   const [freeInput, setFreeInput] = useState("");
 
-  // ✅ 事件文字區滾動容器 ref（只有這塊會滾）
   const eventTextRef = useRef<HTMLDivElement>(null);
 
-  // ✅ GPT式：使用者在底部才 autoscroll；一往上滑就停止
   const [stickToBottom, setStickToBottom] = useState(true);
 
-  // ✅ 防止 StrictMode 或重複 mount 導致初始化載入兩次
   const didInitRef = useRef(false);
 
-  // 可選：保留你原本 observer 的 ref（目前你沒用到也沒關係）
   const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +84,7 @@ export const GamePage: React.FC = () => {
     const el = eventTextRef.current;
     if (!el) return;
 
-    const threshold = 16; // 距離底部 16px 內算「貼底」
+    const threshold = 16;
     const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
 
     setStickToBottom(distanceToBottom <= threshold);
@@ -430,20 +426,14 @@ export const GamePage: React.FC = () => {
           {/* ③ 人生轉折點（寬） */}
           <div className="lg:col-span-6">
             <div className="prophet-article h-full">
-              <header className="text-center mb-4 border-b-2 border-[var(--prophet-border)] pb-3">
+              <header className="text-center mb-4 border-b-2 border-[var(--prophet-border)] ">
                 <h2 className="prophet-headline text-2xl mb-2">人生轉折點</h2>
-                <div className="flex items-center justify-center gap-2">
-                  <FileText size={16} />
-                  <span className="prophet-small-text uppercase tracking-wide">
-                    重要決定時刻
-                  </span>
-                </div>
               </header>
 
               <div
                 ref={eventTextRef}
                 onScroll={handleEventScroll}
-                className="prophet-text text-base leading-relaxed mb-4 max-h-[60px] overflow-y-auto custom-scrollbar pr-2"
+                className="prophet-text text-base leading-relaxed mb-4 h-[120px] overflow-y-auto custom-scrollbar pr-2"
               >
                 {currentEvent ? (
                   <Typewriter
@@ -456,7 +446,7 @@ export const GamePage: React.FC = () => {
                 )}
               </div>
 
-              {typingComplete && currentEvent && !loading && (
+              <div className="h-[180px]">
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -468,7 +458,7 @@ export const GamePage: React.FC = () => {
                   </h3>
 
                   <div className="space-y-2">
-                    {currentEvent.options.map((option: any) => (
+                    {(currentEvent?.options ?? []).map((option: any) => (
                       <button
                         key={option.option_id}
                         onClick={(e: React.MouseEvent) => {
@@ -499,20 +489,9 @@ export const GamePage: React.FC = () => {
                         進度: {eventHistory.length}/3 個選擇
                       </span>
                     </div>
-                    <button
-                      onClick={(e: React.MouseEvent) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleQuickFinish();
-                      }}
-                      className="w-full prophet-button py-2 px-4 text-sm"
-                      disabled={loading}
-                    >
-                      快速結束遊戲（測試用）
-                    </button>
                   </div>
                 </motion.div>
-              )}
+              </div>
 
               {loading && (
                 <div className="text-center prophet-text opacity-70">
@@ -520,7 +499,7 @@ export const GamePage: React.FC = () => {
                 </div>
               )}
 
-              {/* 自由輸入框（也留在這欄） */}
+              {/* 自由輸入框*/}
               <div className="mt-4 pt-3 border-t border-[var(--prophet-border)]">
                 <div className="flex gap-3">
                   <input
@@ -545,7 +524,7 @@ export const GamePage: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="mt-2 text-right">
+                <div className="text-right">
                   <span className="prophet-small-text opacity-60">
                     {freeInput.length}/30
                   </span>
