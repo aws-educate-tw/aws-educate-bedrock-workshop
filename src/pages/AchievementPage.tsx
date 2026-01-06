@@ -46,8 +46,8 @@ export const AchievementPage: React.FC = () => {
    */
   const handleEscNavigation = useCallback(() => {
     console.log("[AchievementPage ESC Nav] Navigating to report");
-    window.location.href = "/report";
-  }, []);
+    navigate("/report");
+  }, [navigate]);
 
   useEffect(() => {
     if (!escTestMode) return;

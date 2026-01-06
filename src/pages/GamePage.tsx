@@ -161,8 +161,8 @@ export const GamePage: React.FC = () => {
    */
   const handleEscNavigation = useCallback(() => {
     console.log("[GamePage ESC Nav] Navigating to summary");
-    window.location.href = "/summary";
-  }, []);
+    navigate("/summary");
+  }, [navigate]);
 
   useEffect(() => {
     if (!escTestMode) return;

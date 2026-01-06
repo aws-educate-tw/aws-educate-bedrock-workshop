@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../hooks/useSession";
 
@@ -14,17 +14,8 @@ import { useSession } from "../hooks/useSession";
  */
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    data,
-    sessionId,
-    loading,
-    error,
-    hasStoredSession,
-    initializeSession,
-    clearSession,
-  } = useSession();
+  const { sessionId, loading, error, initializeSession } = useSession();
 
-  const audioRef = useRef<HTMLAudioElement>(null);
   const [titleAnimated, setTitleAnimated] = useState(false);
   const [knowledgeBaseId, setKnowledgeBaseId] = useState(
     (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) || ""
@@ -36,40 +27,16 @@ export const HomePage: React.FC = () => {
 
   // 使用 useCallback 穩定 navigate 函式引用，避免 useEffect 頻繁重新執行
   const handleEscNavigation = useCallback(() => {
-    console.log(
-      "[ESC Nav] handleEscNavigation called, enableEscNav:",
-      enableEscNav
-    );
     if (enableEscNav) {
       const target = sessionId ? `/game?sessionId=${sessionId}` : `/game`;
-      console.log("[ESC Nav] Attempting navigation to:", target);
-      // 使用 window.location.href 作為主要方式，確保頁面切換
-      window.location.href = target;
+      // 使用 navigate 保持音樂連續播放
+      navigate(target);
     }
-  }, [sessionId, enableEscNav]);
+  }, [sessionId, enableEscNav, navigate]);
 
   useEffect(() => {
     // 頁面載入時滾動到頂部
     window.scrollTo(0, 0);
-
-    // 播放背景音樂（可選，失敗不報錯）
-    const playAudio = async () => {
-      try {
-        if (audioRef.current) {
-          audioRef.current.volume = 0.3;
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            await playPromise.catch(() => {
-              // 自動播放失敗，忽略
-            });
-          }
-        }
-      } catch {
-        // 音頻播放失敗，忽略
-      }
-    };
-
-    playAudio();
 
     // 延遲啟動標題動畫
     const timer = setTimeout(() => {
@@ -98,16 +65,10 @@ export const HomePage: React.FC = () => {
     console.log("[ESC Nav] useEffect triggered, enableEscNav:", enableEscNav);
     // 若未啟用，直接跳過事件綁定
     if (!enableEscNav) {
-      console.log("[ESC Nav] Disabled - VITE_ENABLE_ESC_NAV is not true");
       return;
     }
-    console.log("[ESC Nav] Enabled - listening for ESC key");
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        console.log("[ESC Nav] ESC key detected, navigating to /game", {
-          sessionId,
-          hasSessionId: !!sessionId,
-        });
         // 防止預設行為（避免某些環境下造成整頁刷新或關閉覆蓋層）
         e.preventDefault();
         e.stopPropagation();
@@ -115,9 +76,7 @@ export const HomePage: React.FC = () => {
       }
     };
     document.addEventListener("keydown", onKeyDown, false);
-    console.log("[ESC Nav] Event listener attached (document, bubble phase)");
     return () => {
-      console.log("[ESC Nav] Event listener cleaned up");
       document.removeEventListener("keydown", onKeyDown, false);
     };
   }, [enableEscNav, handleEscNavigation]);
@@ -143,18 +102,6 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  const handleContinue = () => {
-    if (sessionId) {
-      navigate(`/game?sessionId=${sessionId}`);
-    }
-  };
-
-  const handleReset = () => {
-    clearSession();
-    setStatusMessage(null);
-    setShouldNavigate(false);
-  };
-
   return (
     <div
       className="prophet-page"
@@ -166,11 +113,6 @@ export const HomePage: React.FC = () => {
         backgroundAttachment: "fixed",
       }}
     >
-      {/* 背景音樂 */}
-      <audio ref={audioRef} loop preload="auto">
-        <source src="/hedwigs-theme.mp3" type="audio/mpeg" />
-      </audio>
-
       {/* 預言家日報頭版 */}
       <header className="text-center py-8 border-b-4 border-[var(--prophet-border)]">
         <div className="mb-4">
@@ -306,20 +248,6 @@ export const HomePage: React.FC = () => {
               >
                 {loading ? "正在準備您的魔法人生..." : "開始人生模擬"}
               </button>
-
-              {/* {enableEscNav && (
-                <button
-                  type="button"
-                  className="w-full prophet-button py-2 px-4 mt-2 bg-black/70"
-                  onClick={() =>
-                    sessionId
-                      ? navigate(`/game?sessionId=${sessionId}`)
-                      : navigate(`/game`)
-                  }
-                >
-                  開發便捷跳轉（ESC）
-                </button>
-              )} */}
             </form>
           </div>
 

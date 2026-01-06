@@ -1,21 +1,18 @@
-import { gameApiService, handleApiError, mapRadarData } from './gameApi';
-import { fallbackGameService } from '../mocks/gameData';
+import { fallbackGameService } from "../mocks/gameData";
 import {
-  BackgroundRequest,
   BackgroundResponse,
-  StoryRequest,
-  StoryResponse,
-  ResolveEventRequest,
-  ResolveEventResponse,
-  ResultRequest,
-  ResultResponse,
+  FrontendRadarData,
   GameSession,
-  FrontendRadarData
-} from '../types/game';
+  mapRadarData,
+  ResolveEventResponse,
+  ResultResponse,
+  StoryResponse,
+} from "../types/game";
+import { gameApiService } from "./gameApi";
 
 // 整合的遊戲服務 - 自動處理 API 和 Fallback
 class IntegratedGameService {
-  private sessionData: Map<string, GameSession> = new Map();
+  private readonly sessionData: Map<string, GameSession> = new Map();
 
   // 設定 API Base URL
   setApiBaseUrl(url: string) {
@@ -30,7 +27,10 @@ class IntegratedGameService {
   // 儲存 session 到 localStorage
   private saveSession(session: GameSession) {
     this.sessionData.set(session.sessionId, session);
-    localStorage.setItem(`game_session_${session.sessionId}`, JSON.stringify(session));
+    localStorage.setItem(
+      `game_session_${session.sessionId}`,
+      JSON.stringify(session)
+    );
   }
 
   // 從 localStorage 載入 session
@@ -46,7 +46,7 @@ class IntegratedGameService {
         this.sessionData.set(sessionId, session);
         return session;
       } catch (error) {
-        console.warn('Failed to parse stored session:', error);
+        console.warn("Failed to parse stored session:", error);
       }
     }
     return null;
@@ -61,10 +61,14 @@ class IntegratedGameService {
       let backgroundResponse: BackgroundResponse;
 
       if (this.shouldUseFallback()) {
-        console.log('Using fallback service for background generation');
-        backgroundResponse = await fallbackGameService.generateBackground(modelId);
+        console.log("Using fallback service for background generation");
+        backgroundResponse = fallbackGameService.generateBackground({
+          model_id: modelId,
+        }) as any;
       } else {
-        backgroundResponse = await gameApiService.generateBackground({ model_id: modelId });
+        backgroundResponse = await gameApiService.generateBackground({
+          model_id: modelId,
+        });
       }
 
       const session: GameSession = {
@@ -78,17 +82,19 @@ class IntegratedGameService {
           finance: 50,
           health: 80,
           relationships: 60,
-          traits: backgroundResponse.player_identity.initial_traits
-        }
+          traits: backgroundResponse.player_identity.initial_traits,
+        },
       };
 
       this.saveSession(session);
 
       return { session, background: backgroundResponse };
     } catch (error) {
-      console.warn('API failed, using fallback:', error);
-      const backgroundResponse = await fallbackGameService.generateBackground(modelId);
-      
+      console.warn("API failed, using fallback:", error);
+      const backgroundResponse = fallbackGameService.generateBackground({
+        model_id: modelId,
+      }) as any;
+
       const session: GameSession = {
         sessionId: backgroundResponse.session_id,
         modelId,
@@ -100,8 +106,8 @@ class IntegratedGameService {
           finance: 50,
           health: 80,
           relationships: 60,
-          traits: backgroundResponse.player_identity.initial_traits
-        }
+          traits: backgroundResponse.player_identity.initial_traits,
+        },
       };
 
       this.saveSession(session);
@@ -113,32 +119,40 @@ class IntegratedGameService {
   async generateStory(sessionId: string): Promise<StoryResponse> {
     try {
       if (this.shouldUseFallback()) {
-        return await fallbackGameService.generateStory(sessionId);
+        return fallbackGameService.generateStory({
+          session_id: sessionId,
+        }) as any;
       } else {
         return await gameApiService.generateStory({ session_id: sessionId });
       }
     } catch (error) {
-      console.warn('API failed, using fallback:', error);
-      return await fallbackGameService.generateStory(sessionId);
+      console.warn("API failed, using fallback:", error);
+      return fallbackGameService.generateStory({
+        session_id: sessionId,
+      }) as any;
     }
   }
 
   // 3. 解決事件
   async resolveEvent(
-    sessionId: string, 
-    event: StoryResponse, 
+    sessionId: string,
+    event: StoryResponse,
     selectedOptionId: string
   ): Promise<ResolveEventResponse> {
     try {
       let response: ResolveEventResponse;
 
       if (this.shouldUseFallback()) {
-        response = await fallbackGameService.resolveEvent(sessionId, event, selectedOptionId);
+        response = fallbackGameService.resolveEvent({
+          session_id: sessionId,
+          event,
+          selected_option_id: selectedOptionId,
+        }) as any;
       } else {
         response = await gameApiService.resolveEvent({
           session_id: sessionId,
           event,
-          selected_option_id: selectedOptionId
+          selected_option_id: selectedOptionId,
         });
       }
 
@@ -152,9 +166,13 @@ class IntegratedGameService {
 
       return response;
     } catch (error) {
-      console.warn('API failed, using fallback:', error);
-      const response = await fallbackGameService.resolveEvent(sessionId, event, selectedOptionId);
-      
+      console.warn("API failed, using fallback:", error);
+      const response = fallbackGameService.resolveEvent({
+        session_id: sessionId,
+        event,
+        selected_option_id: selectedOptionId,
+      }) as any;
+
       // 更新 session 資料
       const session = this.loadSession(sessionId);
       if (session) {
@@ -176,9 +194,13 @@ class IntegratedGameService {
       let resultResponse: ResultResponse;
 
       if (this.shouldUseFallback()) {
-        resultResponse = await fallbackGameService.generateResult(sessionId);
+        resultResponse = fallbackGameService.generateResult({
+          session_id: sessionId,
+        }) as any;
       } else {
-        resultResponse = await gameApiService.generateResult({ session_id: sessionId });
+        resultResponse = await gameApiService.generateResult({
+          session_id: sessionId,
+        });
       }
 
       // 轉換雷達圖資料格式
@@ -186,10 +208,12 @@ class IntegratedGameService {
 
       return { result: resultResponse, frontendRadar };
     } catch (error) {
-      console.warn('API failed, using fallback:', error);
-      const resultResponse = await fallbackGameService.generateResult(sessionId);
+      console.warn("API failed, using fallback:", error);
+      const resultResponse = fallbackGameService.generateResult({
+        session_id: sessionId,
+      }) as any;
       const frontendRadar = mapRadarData(resultResponse.radar_scores);
-      
+
       return { result: resultResponse, frontendRadar };
     }
   }
@@ -209,8 +233,8 @@ class IntegratedGameService {
   clearAllSessions() {
     this.sessionData.clear();
     // 清除所有遊戲相關的 localStorage
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('game_session_')) {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("game_session_")) {
         localStorage.removeItem(key);
       }
     });

@@ -40,8 +40,8 @@ export const SummaryPage: React.FC = () => {
    */
   const handleEscNavigation = useCallback(() => {
     console.log("[SummaryPage ESC Nav] Navigating to achievement");
-    window.location.href = "/achievement";
-  }, []);
+    navigate("/achievement");
+  }, [navigate]);
 
   useEffect(() => {
     if (!escTestMode) return;
