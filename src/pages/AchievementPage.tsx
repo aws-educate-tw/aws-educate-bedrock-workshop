@@ -226,13 +226,19 @@ export const AchievementPage: React.FC = () => {
                       >
                         <div className="flex gap-3 items-start">
                           {achievement.iconUrl ? (
-                            <img
-                              src={achievement.iconUrl}
-                              alt={achievement.title}
-                              className="w-8 h-8 prophet-photo flex-shrink-0"
-                            />
+                            achievement.iconUrl.startsWith("http") ? (
+                              <img
+                                src={achievement.iconUrl}
+                                alt={achievement.title}
+                                className="w-8 h-8 prophet-photo flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 flex items-center justify-center text-2xl flex-shrink-0">
+                                {achievement.iconUrl}
+                              </div>
+                            )
                           ) : (
-                            <div className="w-8 h-8 border border-[var(--prophet-dark)] flex items-center justify-center text-sm flex-shrink-0">
+                            <div className="w-8 h-8 border border-[var(--prophet-dark)] flex items-center justify-center text-2xl flex-shrink-0">
                               🏆
                             </div>
                           )}
