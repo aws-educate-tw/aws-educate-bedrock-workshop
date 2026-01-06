@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { RadarChartComponent } from "../components/RadarChartComponent";
 import { SummaryState, useAppStore } from "../store";
@@ -9,6 +9,10 @@ export const SummaryPage: React.FC = () => {
   const { summaryState, setSummaryState } = useAppStore();
   const headerRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // 若啟用 ESC 測試模式，允許按 ESC 跳到下一頁
+  const escTestMode =
+    (import.meta.env.VITE_ENABLE_ESC_NAV as string | undefined) === "true";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -31,28 +35,53 @@ export const SummaryPage: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
+  /**
+   * ESC 快捷鍵導頁：進入下一頁（Achievement）測試流程
+   */
+  const handleEscNavigation = useCallback(() => {
+    console.log("[SummaryPage ESC Nav] Navigating to achievement");
+    window.location.href = "/achievement";
+  }, []);
+
+  useEffect(() => {
+    if (!escTestMode) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleEscNavigation();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown, false);
+    return () => document.removeEventListener("keydown", onKeyDown, false);
+  }, [escTestMode, handleEscNavigation]);
+
+  /**
+   * 若無有效 summaryState（例如直接訪問此頁），提供預設範例資料
+   * 欄位結構與 GamePage.tsx 中的 toSummaryState 轉換結果完全對應
+   */
   useEffect(() => {
     if (!summaryState) {
-      // 如果沒有 summaryState，使用預設資料
       const defaultSummary: SummaryState = {
         lifeScore: 75,
         radar: {
           wisdom: 80,
           wealth: 65,
-          relationship: 90,
-          career: 70,
+          relationship: 90, // API 欄位 relationships → 前端 relationship
+          career: 70, // API 欄位 career_development → 前端 career
           health: 80,
         },
         finalSummaryText:
           "你度過了充實而有意義的一生。從小就展現出的善良和智慧，讓你在人生的各個階段都能做出正確的選擇。你重視人際關係，也不忘記持續學習和成長。",
         achievements: [
-          { title: "智慧者", desc: "在人生中展現出卓越的智慧" },
-          { title: "人際達人", desc: "擁有良好的人際關係網絡" },
+          { title: "智慧者", desc: "在人生中展現出卓越的智慧", iconUrl: "⭐" },
+          { title: "人際達人", desc: "擁有良好的人際關係網絡", iconUrl: "💫" },
         ],
         keyChoices: [
-          "童年時選擇幫助害羞的同學，培養了同理心",
-          "學生時期專注學業，奠定了知識基礎",
-          "成年後選擇穩定的工作，重視工作生活平衡",
+          "事件1: 童年時的同學衝突｜選擇：幫助害羞的同學｜影響：培養了同理心",
+          "事件2: 學生時期的學業挑戰｜選擇：專注學業｜影響：奠定了知識基礎",
+          "事件3: 成年後的工作抉擇｜選擇：穩定的工作｜影響：重視工作生活平衡",
         ],
       };
       setSummaryState(defaultSummary);

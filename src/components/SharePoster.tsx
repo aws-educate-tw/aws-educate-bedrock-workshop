@@ -1,5 +1,5 @@
 import React from "react";
-import { Base64Image } from "./ImageWithFallback";
+import { Base64Image } from "./Base64Image";
 import { RadarChartComponent } from "./RadarChartComponent";
 
 interface SharePosterProps {

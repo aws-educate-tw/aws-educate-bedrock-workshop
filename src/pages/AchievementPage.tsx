@@ -12,7 +12,7 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SharePoster } from "../components/SharePoster";
 import { useToast } from "../components/Toast";
@@ -25,16 +25,67 @@ export const AchievementPage: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const { showToast, ToastComponent } = useToast();
 
+  // 若啟用 ESC 測試模式，允許無 summaryState 進入 AchievementPage
+  const escTestMode =
+    (import.meta.env.VITE_ENABLE_ESC_NAV as string | undefined) === "true";
+
   // 頁面載入時滾動到頂部
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
-    if (!summaryState) navigate("/summary", { replace: true });
-  }, [summaryState, navigate]);
+    // 在 ESC 測試模式下，即使無 summaryState 也允許進入
+    if (!summaryState && !escTestMode) {
+      navigate("/summary", { replace: true });
+    }
+  }, [summaryState, navigate, escTestMode]);
 
-  if (!summaryState) return null;
+  /**
+   * ESC 快捷鍵導頁：進入下一頁（Report）測試流程
+   */
+  const handleEscNavigation = useCallback(() => {
+    console.log("[AchievementPage ESC Nav] Navigating to report");
+    window.location.href = "/report";
+  }, []);
+
+  useEffect(() => {
+    if (!escTestMode) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleEscNavigation();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown, false);
+    return () => document.removeEventListener("keydown", onKeyDown, false);
+  }, [escTestMode, handleEscNavigation]);
+
+  // 在 ESC 測試模式下，提供預設範例資料以顯示頁面
+  const displayState =
+    summaryState ||
+    (escTestMode
+      ? {
+          lifeScore: 85,
+          radar: {
+            wisdom: 85,
+            wealth: 75,
+            relationship: 90,
+            career: 80,
+            health: 88,
+          },
+          finalSummaryText: "你的人生充滿精彩故事和成就。",
+          achievements: [
+            { title: "成就者", desc: "展現卓越成就", iconUrl: "🏆" },
+            { title: "領導者", desc: "具有領導力", iconUrl: "👑" },
+          ],
+          keyChoices: ["選擇1", "選擇2", "選擇3"],
+        }
+      : null);
+
+  if (!displayState) return null;
 
   // 分享功能
   const handleFacebookShare = () => {
@@ -48,7 +99,7 @@ export const AchievementPage: React.FC = () => {
   const handleTwitterShare = () => {
     const url = encodeURIComponent(window.location.href);
     const text = encodeURIComponent(
-      `我的 AI 人生模擬結果：${summaryState.lifeScore}/100 分！`
+      `我的 AI 人生模擬結果：${displayState.lifeScore}/100 分！`
     );
     window.open(
       `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
@@ -87,7 +138,7 @@ export const AchievementPage: React.FC = () => {
 
       const dataURL = canvas.toDataURL("image/jpeg", 0.9);
       const link = document.createElement("a");
-      link.download = `life-report-${summaryState.lifeScore}.jpg`;
+      link.download = `life-report-${displayState.lifeScore}.jpg`;
       link.href = dataURL;
       document.body.appendChild(link);
       link.click();
@@ -166,9 +217,9 @@ export const AchievementPage: React.FC = () => {
               </h2>
 
               <div className="h-full overflow-y-auto prophet-scroll">
-                {summaryState.achievements.length > 0 ? (
+                {displayState.achievements.length > 0 ? (
                   <div className="space-y-4">
-                    {summaryState.achievements.map((achievement, index) => (
+                    {displayState.achievements.map((achievement, index) => (
                       <div
                         key={index}
                         className="border border-[var(--prophet-border)] p-3 hover:border-[var(--prophet-dark)] transition-all"
@@ -218,7 +269,7 @@ export const AchievementPage: React.FC = () => {
                 <div className="space-y-4 relative">
                   <div className="absolute left-3 top-0 bottom-0 w-px bg-[var(--prophet-border)]"></div>
 
-                  {summaryState.keyChoices.map((choice, index) => (
+                  {displayState.keyChoices.map((choice, index) => (
                     <div
                       key={index}
                       className="flex gap-3 items-start relative"
@@ -297,9 +348,9 @@ export const AchievementPage: React.FC = () => {
                   className="w-full flex justify-center px-2"
                 >
                   <SharePoster
-                    finalImageUrl={summaryState.finalImageUrl}
-                    lifeScore={summaryState.lifeScore}
-                    radar={summaryState.radar}
+                    finalImageUrl={displayState.finalImageUrl}
+                    lifeScore={displayState.lifeScore}
+                    radar={displayState.radar}
                     tagline="我的 AI 人生模擬結果"
                   />
                 </div>

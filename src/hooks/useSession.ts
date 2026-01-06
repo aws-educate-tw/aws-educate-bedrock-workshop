@@ -8,14 +8,18 @@ export interface UseSessionState {
   sessionId: string | null;
   loading: boolean;
   error: ApiError | null;
+  hasStoredSession: boolean;
 }
 
 export function useSession() {
+  const storedSessionId = SessionService.getSessionId();
+
   const [state, setState] = useState<UseSessionState>({
     data: null,
-    sessionId: SessionService.getSessionId(),
+    sessionId: storedSessionId,
     loading: false,
     error: null,
+    hasStoredSession: Boolean(storedSessionId),
   });
 
   /**
@@ -37,6 +41,7 @@ export function useSession() {
         data: response,
         sessionId: response.session_id,
         loading: false,
+        hasStoredSession: true,
       }));
 
       return response;
@@ -66,12 +71,27 @@ export function useSession() {
       sessionId: null,
       loading: false,
       error: null,
+      hasStoredSession: false,
     });
+  }, []);
+
+  /**
+   * 重新讀取 localStorage 中的 session_id（用於回到首頁時的續玩按鈕）
+   */
+  const restoreSession = useCallback(() => {
+    const restored = SessionService.getSessionId();
+    setState((prev) => ({
+      ...prev,
+      sessionId: restored,
+      hasStoredSession: Boolean(restored),
+    }));
+    return restored;
   }, []);
 
   return {
     ...state,
     initializeSession,
     clearSession,
+    restoreSession,
   };
 }

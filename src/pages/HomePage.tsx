@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../hooks/useSession";
 
@@ -14,13 +14,39 @@ import { useSession } from "../hooks/useSession";
  */
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { sessionId, loading, error, initializeSession } = useSession();
+  const {
+    data,
+    sessionId,
+    loading,
+    error,
+    hasStoredSession,
+    initializeSession,
+    clearSession,
+  } = useSession();
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [titleAnimated, setTitleAnimated] = useState(false);
   const [knowledgeBaseId, setKnowledgeBaseId] = useState(
     (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) || ""
   );
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [shouldNavigate, setShouldNavigate] = useState(false);
+  const enableEscNav =
+    (import.meta.env.VITE_ENABLE_ESC_NAV as string | undefined) === "true";
+
+  // 使用 useCallback 穩定 navigate 函式引用，避免 useEffect 頻繁重新執行
+  const handleEscNavigation = useCallback(() => {
+    console.log(
+      "[ESC Nav] handleEscNavigation called, enableEscNav:",
+      enableEscNav
+    );
+    if (enableEscNav) {
+      const target = sessionId ? `/game?sessionId=${sessionId}` : `/game`;
+      console.log("[ESC Nav] Attempting navigation to:", target);
+      // 使用 window.location.href 作為主要方式，確保頁面切換
+      window.location.href = target;
+    }
+  }, [sessionId, enableEscNav]);
 
   useEffect(() => {
     // 頁面載入時滾動到頂部
@@ -57,13 +83,44 @@ export const HomePage: React.FC = () => {
    * 成功初始化後自動導向 GamePage
    */
   useEffect(() => {
-    if (sessionId && !loading && !error) {
+    if (shouldNavigate && sessionId && !loading && !error) {
       const timer = setTimeout(() => {
         navigate(`/game?sessionId=${sessionId}`);
-      }, 1500);
+      }, 800);
       return () => clearTimeout(timer);
     }
-  }, [sessionId, loading, error, navigate]);
+  }, [shouldNavigate, sessionId, loading, error, navigate]);
+
+  /**
+   * 允許以 ESC 快捷鍵導頁（可透過環境變數關閉按鈕顯示）
+   */
+  useEffect(() => {
+    console.log("[ESC Nav] useEffect triggered, enableEscNav:", enableEscNav);
+    // 若未啟用，直接跳過事件綁定
+    if (!enableEscNav) {
+      console.log("[ESC Nav] Disabled - VITE_ENABLE_ESC_NAV is not true");
+      return;
+    }
+    console.log("[ESC Nav] Enabled - listening for ESC key");
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        console.log("[ESC Nav] ESC key detected, navigating to /game", {
+          sessionId,
+          hasSessionId: !!sessionId,
+        });
+        // 防止預設行為（避免某些環境下造成整頁刷新或關閉覆蓋層）
+        e.preventDefault();
+        e.stopPropagation();
+        handleEscNavigation();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown, false);
+    console.log("[ESC Nav] Event listener attached (document, bubble phase)");
+    return () => {
+      console.log("[ESC Nav] Event listener cleaned up");
+      document.removeEventListener("keydown", onKeyDown, false);
+    };
+  }, [enableEscNav, handleEscNavigation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,12 +130,29 @@ export const HomePage: React.FC = () => {
       (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ||
       "default-kb";
 
+    setStatusMessage(null);
+    setShouldNavigate(false);
+
     try {
       await initializeSession(kbId);
+      setStatusMessage("魔法背景生成完成，正在前往冒險...");
+      setShouldNavigate(true);
     } catch (err) {
       console.error("Failed to initialize session:", err);
       // 錯誤已在 hook 中設定，UI 會顯示
     }
+  };
+
+  const handleContinue = () => {
+    if (sessionId) {
+      navigate(`/game?sessionId=${sessionId}`);
+    }
+  };
+
+  const handleReset = () => {
+    clearSession();
+    setStatusMessage(null);
+    setShouldNavigate(false);
   };
 
   return (
@@ -157,7 +231,7 @@ export const HomePage: React.FC = () => {
           {/* 左欄：魔法照片 */}
           <div className="prophet-article">
             <h3 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2">
-              霍格華茲魔法學院
+              AWS Educate 魔法學院
             </h3>
             <div className="prophet-photo mb-4 group cursor-pointer">
               <motion.img
@@ -186,7 +260,7 @@ export const HomePage: React.FC = () => {
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <label className="block prophet-text font-bold text-sm">
-                  麻法知識庫 ID
+                  魔法知識庫 ID
                 </label>
                 <input
                   type="text"
@@ -197,6 +271,14 @@ export const HomePage: React.FC = () => {
                   disabled={loading}
                 />
               </div>
+
+              {statusMessage && (
+                <div className="border border-[var(--prophet-border)] bg-emerald-50 p-3">
+                  <p className="prophet-text text-emerald-800 text-sm">
+                    {statusMessage}
+                  </p>
+                </div>
+              )}
 
               {error && (
                 <div className="border-2 border-red-800 bg-red-50 p-3">
@@ -210,6 +292,9 @@ export const HomePage: React.FC = () => {
                       "網路連線失敗，請檢查您的網路設定"}
                     {error.errorType === "parse" &&
                       "服務回應格式錯誤，請稍後重試"}
+                    {!["timeout", "4xx", "5xx", "network", "parse"].includes(
+                      error.errorType
+                    ) && error.message}
                   </p>
                 </div>
               )}
@@ -221,6 +306,20 @@ export const HomePage: React.FC = () => {
               >
                 {loading ? "正在準備您的魔法人生..." : "開始人生模擬"}
               </button>
+
+              {/* {enableEscNav && (
+                <button
+                  type="button"
+                  className="w-full prophet-button py-2 px-4 mt-2 bg-black/70"
+                  onClick={() =>
+                    sessionId
+                      ? navigate(`/game?sessionId=${sessionId}`)
+                      : navigate(`/game`)
+                  }
+                >
+                  開發便捷跳轉（ESC）
+                </button>
+              )} */}
             </form>
           </div>
 
