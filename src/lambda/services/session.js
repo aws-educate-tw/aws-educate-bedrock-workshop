@@ -10,6 +10,7 @@ const {
     fromAttr,
     toAttr,
 } = require("../utils/dynamodb");
+const { getPhaseInfo } = require("../config/gamePhases");
 
 const getSession = async (sessionId) => {
     if (!tableName) {
@@ -34,7 +35,7 @@ const createSession = async (sessionId, data) => {
     const now = new Date();
     const ttl = Math.floor(now.getTime() / 1000) + 24 * 60 * 60;
 
-    const { modelId, background, playerIdentity, lifeGoal } = data;
+    const { knowledgeBaseId, background, playerIdentity, lifeGoal } = data;
     const initialTraits = Array.isArray(playerIdentity.initial_traits)
         ? playerIdentity.initial_traits
         : [];
@@ -45,16 +46,18 @@ const createSession = async (sessionId, data) => {
             Item: {
                 session_id: { S: sessionId },
                 status: { S: "active" },
-                model_id: { S: modelId },
+                knowledge_base_id: { S: knowledgeBaseId },
                 world_context: {
                     M: {
-                        era: { S: background.world_context?.era || "modern" },
-                        theme: { S: background.world_context?.theme || "career-focused" },
+                        era: { S: background.world_context?.era || "aetheria" },
+                        theme: { S: background.world_context?.theme || "magic-academy" },
                     },
                 },
                 player_identity: {
                     M: {
                         age: { N: String(playerIdentity.age || 0) },
+                        gender: { S: playerIdentity.gender || "" },
+                        appearance: { S: playerIdentity.appearance || "" },
                         profession: { S: playerIdentity.profession || "" },
                         initial_traits: {
                             L: initialTraits.map((t) => ({ S: t })),
@@ -65,16 +68,18 @@ const createSession = async (sessionId, data) => {
                 player_state: {
                     M: {
                         age: { N: String(playerIdentity.age || 0) },
-                        career: { S: "學生" },
-                        finance: { N: "50" },
-                        health: { N: "80" },
-                        relationships: { N: "60" },
+                        career: { S: "魔法學徒" },
+                        wisdom: { N: "50" },
+                        wealth: { N: "50" },
+                        relationships: { N: "50" },
+                        career_development: { N: "50" },
+                        wellbeing: { N: "80" },
                         traits: {
                             L: initialTraits.map((t) => ({ S: t })),
                         },
                     },
                 },
-                current_summary: { S: "你剛踏入人生的起點，對未來充滿期待。" },
+                current_summary: { S: "你剛發現自己擁有魔法天賦，即將踏入艾瑟里亞魔法世界的旅程。" },
                 turn: { N: "0" },
                 history: { L: [] },
                 final_result: { NULL: true },
@@ -92,7 +97,7 @@ const updateSessionAfterEvent = async (sessionId, sessionItem, data) => {
     }
 
     const now = new Date();
-    const { historyItem, updatedPlayerState, updatedSummary, modelId, lifeGoal } = data;
+    const { historyItem, updatedPlayerState, updatedSummary, knowledgeBaseId, lifeGoal } = data;
 
     const history = fromAttr(sessionItem.history) || [];
     const updatedHistory = history.concat(historyItem);
@@ -104,7 +109,7 @@ const updateSessionAfterEvent = async (sessionId, sessionItem, data) => {
             Item: {
                 session_id: { S: sessionId },
                 status: { S: getAttrString(sessionItem.status) || "active" },
-                model_id: { S: modelId },
+                knowledge_base_id: { S: knowledgeBaseId },
                 world_context: toAttr(fromAttr(sessionItem.world_context) || {}),
                 player_identity: toAttr(fromAttr(sessionItem.player_identity) || {}),
                 life_goal: { S: lifeGoal },
@@ -127,7 +132,7 @@ const updateSessionWithResult = async (sessionId, sessionItem, data) => {
     }
 
     const now = new Date();
-    const { finalResult, modelId, lifeGoal, playerState, history } = data;
+    const { finalResult, knowledgeBaseId, lifeGoal, playerState, history } = data;
 
     await dynamoClient.send(
         new PutItemCommand({
@@ -135,7 +140,7 @@ const updateSessionWithResult = async (sessionId, sessionItem, data) => {
             Item: {
                 session_id: { S: sessionId },
                 status: { S: "ended" },
-                model_id: { S: modelId },
+                knowledge_base_id: { S: knowledgeBaseId },
                 world_context: toAttr(fromAttr(sessionItem.world_context) || {}),
                 player_identity: toAttr(fromAttr(sessionItem.player_identity) || {}),
                 life_goal: { S: lifeGoal },
@@ -154,21 +159,33 @@ const updateSessionWithResult = async (sessionId, sessionItem, data) => {
 
 const parseSessionState = (sessionItem) => {
     const playerState = getAttrMap(sessionItem.player_state);
+    const playerIdentity = getAttrMap(sessionItem.player_identity);
+    const turn = getAttrNumber(sessionItem.turn);
+    const phaseInfo = getPhaseInfo(turn);
+
     return {
-        modelId: getAttrString(sessionItem.model_id),
+        knowledgeBaseId: getAttrString(sessionItem.knowledge_base_id),
         currentSummary: getAttrString(sessionItem.current_summary),
         lifeGoal: getAttrString(sessionItem.life_goal),
         playerState: fromAttr(sessionItem.player_state) || {},
+        playerIdentity: {
+            gender: getAttrString(playerIdentity.gender),
+            appearance: getAttrString(playerIdentity.appearance),
+        },
         history: fromAttr(sessionItem.history) || [],
+        turn,
+        phaseInfo,
         storyContext: {
             summary: getAttrString(sessionItem.current_summary),
             goal: getAttrString(sessionItem.life_goal),
             state: {
                 age: getAttrNumber(playerState.age),
                 career: getAttrString(playerState.career),
-                finance: getAttrNumber(playerState.finance),
-                health: getAttrNumber(playerState.health),
+                wisdom: getAttrNumber(playerState.wisdom),
+                wealth: getAttrNumber(playerState.wealth),
                 relationships: getAttrNumber(playerState.relationships),
+                career_development: getAttrNumber(playerState.career_development),
+                wellbeing: getAttrNumber(playerState.wellbeing),
                 traits: getAttrList(playerState.traits).map((t) => getAttrString(t)),
             },
         },

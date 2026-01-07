@@ -1,31 +1,35 @@
-import { 
-  BackgroundRequest, BackgroundResponse, 
-  StoryRequest, StoryResponse,
-  ResolveEventRequest, ResolveEventResponse,
-  ResultRequest, ResultResponse 
-} from '../types/game';
-import { mockGameService } from '../mocks/gameData';
+import { mockGameService } from "../mocks/gameData";
+import {
+  BackgroundRequest,
+  BackgroundResponse,
+  ResolveEventRequest,
+  ResolveEventResponse,
+  ResultRequest,
+  ResultResponse,
+  StoryRequest,
+  StoryResponse,
+} from "../types/game";
 
 export class GameApiService {
   private baseURL: string;
   private useMock: boolean;
 
   constructor(baseURL?: string) {
-    this.baseURL = baseURL || '';
-    this.useMock = !baseURL || baseURL.trim() === '';
+    this.baseURL = baseURL || "";
+    this.useMock = !baseURL || baseURL.trim() === "";
   }
 
   private async apiCall<T>(endpoint: string, data: any): Promise<T> {
     if (this.useMock) {
       // 使用 mock 服務
       switch (endpoint) {
-        case '/generate-background':
+        case "/generate-background":
           return mockGameService.generateBackground(data) as T;
-        case '/generate-story':
+        case "/generate-story":
           return mockGameService.generateStory(data) as T;
-        case '/resolve-event':
+        case "/resolve-event":
           return mockGameService.resolveEvent(data) as T;
-        case '/generate-result':
+        case "/generate-result":
           return mockGameService.generateResult(data) as T;
         default:
           throw new Error(`Unknown endpoint: ${endpoint}`);
@@ -34,9 +38,9 @@ export class GameApiService {
 
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
@@ -54,19 +58,35 @@ export class GameApiService {
     }
   }
 
-  async generateBackground(request: BackgroundRequest): Promise<BackgroundResponse> {
-    return this.apiCall<BackgroundResponse>('/generate-background', request);
+  async generateBackground(
+    request: BackgroundRequest
+  ): Promise<BackgroundResponse> {
+    return this.apiCall<BackgroundResponse>("/generate-background", request);
   }
 
   async generateStory(request: StoryRequest): Promise<StoryResponse> {
-    return this.apiCall<StoryResponse>('/generate-story', request);
+    return this.apiCall<StoryResponse>("/generate-story", request);
   }
 
-  async resolveEvent(request: ResolveEventRequest): Promise<ResolveEventResponse> {
-    return this.apiCall<ResolveEventResponse>('/resolve-event', request);
+  async resolveEvent(
+    request: ResolveEventRequest
+  ): Promise<ResolveEventResponse> {
+    return this.apiCall<ResolveEventResponse>("/resolve-event", request);
   }
 
   async generateResult(request: ResultRequest): Promise<ResultResponse> {
-    return this.apiCall<ResultResponse>('/generate-result', request);
+    return this.apiCall<ResultResponse>("/generate-result", request);
+  }
+
+  setBaseURL(url: string) {
+    this.baseURL = url;
+    this.useMock = !url || url.trim() === "";
+  }
+
+  isConfigured(): boolean {
+    return this.baseURL !== "" && this.baseURL.trim() !== "";
   }
 }
+
+// 導出實例
+export const gameApiService = new GameApiService();

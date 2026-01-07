@@ -1,414 +1,447 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Send, ChevronRight, Target, FileText } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useAppStore } from '../store';
-import { GameSession } from '../types/game';
-import { ImageWithFallback } from '../components/ImageWithFallback';
+import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Base64Image } from "../components/Base64Image";
+import { useGameFlow } from "../hooks/useGameFlow";
+import {
+  ApiError,
+  FinalScores,
+  GenerateResultResponse,
+} from "../services/api/types";
+import { SessionService } from "../services/session";
+import { SummaryState, useAppStore } from "../store";
 
-// 打字機效果組件
-const Typewriter: React.FC<{ text: string; speed?: number; onComplete?: () => void }> = ({ text, speed = 40, onComplete }) => {
-  const [displayedText, setDisplayedText] = useState('');
-  
+/**
+ * 打字機效果：
+ * - effect 只依賴 text/speed，不會因為 onComplete/onTick 的 function identity 改變而重跑
+ * - onTick: 每吐一個字通知外部（外部決定要不要 autoscroll）
+ */
+const Typewriter: React.FC<{
+  text: string;
+  speed?: number;
+  onComplete?: () => void;
+  onTick?: () => void;
+}> = ({ text, speed = 40, onComplete, onTick }) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const onCompleteRef = useRef(onComplete);
+  const onTickRef = useRef(onTick);
+
   useEffect(() => {
-    setDisplayedText('');
-    let i = 0;
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    onTickRef.current = onTick;
+  }, [onTick]);
+
+  useEffect(() => {
+    setDisplayedText("");
     if (!text) return;
-    const timer = setInterval(() => {
+
+    let i = 0;
+    const timer = window.setInterval(() => {
       setDisplayedText((prev) => prev + text.charAt(i));
+
+      // 每次吐字通知外部（外部可以做 autoscroll）
+      onTickRef.current?.();
+
       i++;
       if (i >= text.length) {
-        clearInterval(timer);
-        if (onComplete) onComplete();
+        window.clearInterval(timer);
+        onCompleteRef.current?.();
       }
     }, speed);
-    return () => clearInterval(timer);
-  }, [text, speed, onComplete]);
+
+    return () => window.clearInterval(timer);
+  }, [text, speed]);
 
   return <span>{displayedText}</span>;
 };
 
+const toRadar = (scores: FinalScores) => ({
+  wisdom: scores.wisdom,
+  wealth: scores.wealth,
+  relationship: scores.relationships,
+  career: scores.career_development,
+  health: scores.wellbeing,
+});
+
+const toSummaryState = (
+  result: GenerateResultResponse,
+  history: ReturnType<typeof useGameFlow>["history"]
+) => {
+  const lifeScore = Math.round(
+    (result.final_scores.wisdom +
+      result.final_scores.wealth +
+      result.final_scores.relationships +
+      result.final_scores.career_development +
+      result.final_scores.wellbeing) /
+      5
+  );
+
+  const achievements = result.achievements.map((a) => ({
+    title: a.title,
+    desc: a.description,
+    iconUrl: a.icon,
+  }));
+
+  const keyChoices = (result.key_decisions || []).length
+    ? result.key_decisions.map(
+        (k, index) =>
+          `事件${index + 1}: ${k.event_description}｜選擇：${
+            k.decision
+          }｜影響：${k.impact}`
+      )
+    : history.map(
+        (h, index) =>
+          `事件${index + 1}: ${h.event.event_description}｜結果：${h.outcome}`
+      );
+
+  return {
+    lifeScore,
+    radar: toRadar(result.final_scores),
+    finalSummaryText: result.summary,
+    achievements,
+    keyChoices,
+    finalImageUrl: result.image || undefined,
+  };
+};
+
 export const GamePage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { 
-    currentSession, 
-    loading, 
-    error, 
-    setError,
-    setCurrentSession,
-    setSummaryState
-  } = useAppStore();
-  
-  const [typingComplete, setTypingComplete] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState(currentSession?.currentEvent);
-  const [eventHistory, setEventHistory] = useState<string[]>([]);
-  const [freeInput, setFreeInput] = useState('');
-  const cardRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLDivElement>(null);
+  const sessionId = useMemo(
+    () => searchParams.get("sessionId") || SessionService.getSessionId(),
+    [searchParams]
+  );
+
+  const {
+    event,
+    loadingEvent,
+    submitting,
+    error,
+    history,
+    progress,
+    playerState,
+    pendingResult,
+    shouldFinish,
+    selectOption,
+    resetError,
+  } = useGameFlow(sessionId);
+
+  const { setSummaryState } = useAppStore();
+
+  const eventTextRef = useRef<HTMLDivElement>(null);
+  const [stickToBottom, setStickToBottom] = useState(true);
+
+  // 若啟用 ESC 測試模式，允許無 sessionId 進入 GamePage
+  const escTestMode =
+    (import.meta.env.VITE_ENABLE_ESC_NAV as string | undefined) === "true";
 
   useEffect(() => {
-    // 頁面載入時滾動到頂部
     window.scrollTo(0, 0);
-    
-    // Intersection Observer for animations
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    [cardRef.current, imageRef.current].forEach(ref => {
-      if (ref) observer.observe(ref);
-    });
-
-    return () => observer.disconnect();
   }, []);
 
-  // 初始化時自動載入第一個事件
   useEffect(() => {
-    if (currentSession && !currentEvent && !loading) {
-      console.log('Loading first event...');
-      loadNextEvent();
+    // 在 ESC 測試模式下，即使無 sessionId 也允許進入
+    if (!sessionId && !escTestMode) {
+      navigate("/");
     }
-  }, [currentSession, currentEvent, loading]);
+  }, [sessionId, navigate, escTestMode]);
 
-  const loadNextEvent = useCallback(async () => {
-    if (!currentSession) return;
-    
-    console.log('loadNextEvent called, eventHistory.length:', eventHistory.length);
-    
-    // 使用 mock 事件資料
-    const mockEvents = [
-      {
-        event_id: 'event_1',
-        event_description: '你在小學時期遇到了一個轉學生，他看起來很孤單。你會如何對待他？',
-        options: [
-          { option_id: 'A', description: '主動邀請他一起玩，成為朋友' },
-          { option_id: 'B', description: '保持距離，觀察一段時間再說' }
-        ]
-      },
-      {
-        event_id: 'event_2',
-        event_description: '高中時期，你面臨選擇科系的重要時刻。你的興趣與父母的期望不同。',
-        options: [
-          { option_id: 'A', description: '堅持自己的興趣，選擇藝術相關科系' },
-          { option_id: 'B', description: '聽從父母建議，選擇商科或理工科' }
-        ]
-      },
-      {
-        event_id: 'event_3',
-        event_description: '剛出社會的你收到兩個工作機會：一個是大公司的穩定職位，另一個是新創公司的挑戰性工作。',
-        options: [
-          { option_id: 'A', description: '選擇大公司，追求穩定與保障' },
-          { option_id: 'B', description: '加入新創公司，追求成長與挑戰' }
-        ]
+  /**
+   * ESC 快捷鍵導頁：進入下一頁（Summary）測試流程
+   */
+  const handleEscNavigation = useCallback(() => {
+    console.log("[GamePage ESC Nav] Navigating to summary");
+    navigate("/summary");
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!escTestMode) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleEscNavigation();
       }
-    ];
-    
-    const eventIndex = eventHistory.length;
-    console.log('Event index:', eventIndex, 'Total events:', mockEvents.length);
-    
-    if (eventIndex < mockEvents.length) {
-      const selectedEvent = mockEvents[eventIndex];
-      console.log('Setting event:', selectedEvent);
-      setCurrentEvent(selectedEvent);
-      setTypingComplete(false);
-    } else {
-      // 沒有更多事件，結束遊戲
-      console.log('No more events, finishing game');
-      const mockSummary = {
-        lifeScore: 75,
-        radar: {
-          wisdom: 80,
-          wealth: 65,
-          relationship: 90,
-          career: 70,
-          health: 80
-        },
-        finalSummaryText: '你度過了充實而有意義的一生。從小就展現出的善良和智慧，讓你在人生的各個階段都能做出正確的選擇。你重視人際關係，也不忘記持續學習和成長。',
-        achievements: [
-          { title: '智慧者', desc: '在人生中展現出卓越的智慧' },
-          { title: '人際達人', desc: '擁有良好的人際關係網絡' }
-        ],
-        keyChoices: eventHistory.length > 0 ? eventHistory : ['進行了完整的人生模擬']
-      };
-      setSummaryState(mockSummary);
-      navigate('/summary');
-    }
-  }, [currentSession, eventHistory, navigate, setSummaryState]);
-
-  const handleAction = async (actionType: 'A' | 'B' | 'FREE', freeText?: string) => {
-    if (!currentEvent) return;
-    
-    // 記錄選擇歷史
-    const selectedOption = actionType === 'FREE' 
-      ? { option_id: 'FREE', description: freeText || '' }
-      : currentEvent.options.find(opt => opt.option_id === actionType);
-    
-    if (selectedOption) {
-      setEventHistory(prev => [...prev, selectedOption.description]);
-    }
-    
-    // 清除當前事件，載入下一個
-    setCurrentEvent(null);
-    
-    // 檢查是否達到結束條件（例如 3 個選擇）
-    const newHistoryLength = eventHistory.length + 1;
-    if (newHistoryLength >= 3) {
-      // 直接設置模擬的summaryState並跳轉
-      const mockSummary = {
-        lifeScore: 75,
-        radar: {
-          wisdom: 80,
-          wealth: 65,
-          relationship: 90,
-          career: 70,
-          health: 80
-        },
-        finalSummaryText: '你度過了充實而有意義的一生。從小就展現出的善良和智慧，讓你在人生的各個階段都能做出正確的選擇。你重視人際關係，也不忘記持續學習和成長。',
-        achievements: [
-          { title: '智慧者', desc: '在人生中展現出卓越的智慧' },
-          { title: '人際達人', desc: '擁有良好的人際關係網絡' }
-        ],
-        keyChoices: [...eventHistory, selectedOption.description]
-      };
-      setSummaryState(mockSummary);
-      navigate('/summary');
-    } else {
-      // 載入下一個事件
-      setTimeout(loadNextEvent, 1000);
-    }
-  };
-
-  const handleFreeSubmit = () => {
-    if (freeInput.trim().length === 0) return;
-    if (freeInput.length > 30) {
-      alert('輸入內容不能超過 30 字');
-      return;
-    }
-    
-    handleAction('FREE', freeInput.trim());
-    setFreeInput('');
-  };
-
-  const handleQuickFinish = async () => {
-    // 直接設置模擬的summaryState並跳轉
-    const mockSummary = {
-      lifeScore: 75,
-      radar: {
-        wisdom: 80,
-        wealth: 65,
-        relationship: 90,
-        career: 70,
-        health: 80
-      },
-      finalSummaryText: '你度過了充實而有意義的一生。從小就展現出的善良和智慧，讓你在人生的各個階段都能做出正確的選擇。你重視人際關係，也不忘記持續學習和成長。',
-      achievements: [
-        { title: '智慧者', desc: '在人生中展現出卓越的智慧' },
-        { title: '人際達人', desc: '擁有良好的人際關係網絡' }
-      ],
-      keyChoices: eventHistory.length > 0 ? eventHistory : [
-        '童年時選擇幫助害羞的同學，培養了同理心',
-        '學生時期專注學業，奠定了知識基礎',
-        '成年後選擇穩定的工作，重視工作生活平衡'
-      ]
     };
-    setSummaryState(mockSummary);
-    navigate('/summary');
+    document.addEventListener("keydown", onKeyDown, false);
+    return () => document.removeEventListener("keydown", onKeyDown, false);
+  }, [escTestMode, handleEscNavigation]);
+
+  useEffect(() => {
+    if (pendingResult) {
+      const summary = toSummaryState(pendingResult, history) as SummaryState;
+      setSummaryState(summary);
+      navigate("/summary");
+    }
+  }, [pendingResult, history, setSummaryState, navigate]);
+
+  const handleEventScroll = () => {
+    const el = eventTextRef.current;
+    if (!el) return;
+    const threshold = 16;
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setStickToBottom(distanceToBottom <= threshold);
   };
 
-  if (!currentSession) {
-    // 如果沒有 session，創建一個預設的
-    const defaultSession: GameSession = {
-      sessionId: 'default-session',
-      modelId: 'mock-model',
-      background: '你出生在一個普通的中產階級家庭，父母都是上班族。',
-      lifeGoal: '成為一個對社會有貢獻的人，同時擁有幸福的家庭生活。',
-      playerState: {
-        age: 25,
-        career: 50,
-        finance: 40,
-        health: 80,
-        relationships: 70,
-        traits: ['好奇心旺盛', '善良']
-      },
-      currentSummary: '你的人生正在展開...'
-    };
-    setCurrentSession(defaultSession);
-    return null;
-  }
+  const scrollEventToBottomIfNeeded = () => {
+    if (!stickToBottom) return;
+    const el = eventTextRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight - el.clientHeight;
+    });
+  };
+
+  const handleSelectOption = async (optionId: string) => {
+    if (submitting || !event) return;
+    try {
+      await selectOption(optionId);
+    } catch {
+      // 錯誤已在 hook 中處理並回填
+    }
+  };
+
+  const renderErrorMessage = (err: ApiError) => {
+    switch (err.errorType) {
+      case "timeout":
+        return "連線逾時，請稍後重試";
+      case "4xx":
+        return err.message || "請求參數有誤";
+      case "5xx":
+        return "伺服器暫時不可用，請稍後再試";
+      case "network":
+        return "網路連線失敗，請檢查您的網路設定";
+      case "parse":
+        return "回應格式錯誤，請稍後再試";
+      default:
+        return err.message;
+    }
+  };
 
   return (
-    <div className="prophet-page" style={{ backgroundImage: 'url(https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/background_cznh7q.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+    <div
+      className="prophet-page"
+      style={{
+        backgroundImage:
+          "url(https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/background_cznh7q.png)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
+    >
       <header className="text-center py-4 border-b-2 border-[var(--prophet-border)]">
         <h1 className="prophet-title text-2xl mb-2">
           {"THE DAILY PROPHET".split("").map((char, index) => (
-            <span key={index} className={`${char === 'A' ? 'text-[var(--prophet-accent)] inline-block' : ''}`} style={{ animation: char === 'A' ? 'bounce-a 3s infinite' : 'none' }}>
+            <span
+              key={index}
+              className={`${
+                char === "A" ? "text-[var(--prophet-accent)] inline-block" : ""
+              }`}
+              style={{
+                animation: char === "A" ? "bounce-a 3s infinite" : "none",
+              }}
+            >
               {char}
             </span>
           ))}
         </h1>
-        <div className="prophet-dateline">
-          ★ 人生模擬進行中 ★
-        </div>
+        <div className="prophet-dateline">★ 人生模擬進行中 ★</div>
       </header>
+
       <div className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 左欄：人物資訊 */}
-          <div className="space-y-4">
-            <div className="prophet-article">
-              <h3 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2">
+        {/* ✅ 三欄不等寬：12欄格 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ① 人物近影（中窄：跟圖片差不多高度） */}
+          <div className="lg:col-span-3">
+            <div className="prophet-article h-full">
+              <h3 className="prophet-headline text-lg mb-3 border-b border-[var(--prophet-border)] pb-2">
                 人物近影
               </h3>
-              <div className="prophet-photo mx-auto mb-4" style={{ maxWidth: '300px' }}>
-                <ImageWithFallback
-                  src={undefined}
+
+              <div
+                className="prophet-photo mx-auto"
+                style={{ maxWidth: "240px" }}
+              >
+                <Base64Image
+                  base64={event?.image || null}
                   alt="遊戲場景"
                   className="w-full h-full"
-                  aspectRatio="4:5"
-                  fallbackType="scene"
                 />
               </div>
-              <div className="text-center">
+
+              <div className="text-center mt-3">
                 <p className="prophet-text text-sm">
-                  年齡：<span className="font-bold">{currentSession.playerState?.age || 0} 歲</span>
+                  <span className="opacity-80">角色狀態：</span>
+                  <span className="font-bold">
+                    年齡 {playerState?.age ?? "—"} 歲
+                  </span>
                 </p>
               </div>
             </div>
-            
-            <div className="prophet-article">
-              <h4 className="prophet-headline text-base mb-3 flex items-center gap-2">
-                <Target size={16} /> 現狀說明
-              </h4>
-              <div className="space-y-2">
+          </div>
+
+          {/* ② 現況說明（窄） */}
+          <div className="lg:col-span-3">
+            <div className="prophet-article h-full">
+              <h3 className="prophet-headline text-lg mb-3 border-b border-[var(--prophet-border)] pb-2">
+                現況說明
+              </h3>
+
+              <div className="space-y-3">
                 <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
-                  <span>狀態</span>
-                  <span className="font-bold">年齡 {currentSession.playerState?.age || 0} 歲</span>
+                  <span>年齡</span>
+                  <span className="font-bold">
+                    {playerState?.age ?? "—"} 歲
+                  </span>
                 </div>
-                <div className="prophet-small-text">
-                  <strong>人生目標：</strong>{currentSession.lifeGoal || '載入中...'}
+
+                <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
+                  <span>健康</span>
+                  <span className="font-bold">
+                    {playerState?.wellbeing ?? "—"}
+                  </span>
                 </div>
+
+                <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
+                  <span>財務</span>
+                  <span className="font-bold">
+                    {playerState?.wealth ?? "—"}
+                  </span>
+                </div>
+
+                <div className="prophet-small-text leading-snug">
+                  <strong>人生目標：</strong>
+                  尚未提供（請參考背景）
+                </div>
+
+                {!!playerState?.traits?.length && (
+                  <div className="prophet-small-text">
+                    <strong>特質：</strong>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {playerState.traits.slice(0, 4).map((t: string) => (
+                        <span
+                          key={t}
+                          className="px-2 py-0.5 border border-[var(--prophet-border)] prophet-small-text"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-          {/* 右欄：主要事件 */}
-          <div className="prophet-article">
-            <header className="text-center mb-6 border-b-2 border-[var(--prophet-border)] pb-4">
-              <h2 className="prophet-headline text-2xl mb-2">人生轉折點</h2>
-              <div className="flex items-center justify-center gap-2">
-                <FileText size={16} />
-                <span className="prophet-small-text uppercase tracking-wide">重要決定時刻</span>
-              </div>
-            </header>
-            
-            <div className="prophet-text text-base leading-relaxed mb-6 min-h-[200px] overflow-y-auto custom-scrollbar">
-              {currentEvent ? (
-                <Typewriter 
-                  text={currentEvent.event_description} 
-                  onComplete={() => setTypingComplete(true)} 
-                />
-              ) : (
-                '正在載入事件...'
-              )}
-            </div>
 
-            {typingComplete && currentEvent && !loading && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                className="space-y-4"
+          {/* ③ 人生轉折點（寬） */}
+          <div className="lg:col-span-6">
+            <div className="prophet-article h-full">
+              <header className="text-center mb-4 border-b-2 border-[var(--prophet-border)] ">
+                <h2 className="prophet-headline text-2xl mb-2">人生轉折點</h2>
+              </header>
+
+              <div
+                ref={eventTextRef}
+                onScroll={handleEventScroll}
+                className="prophet-text text-base leading-relaxed mb-4 h-[120px] overflow-y-auto custom-scrollbar pr-2"
               >
-                <div className="prophet-divider mb-4"></div>
-                <h3 className="prophet-subtitle text-base mb-4">您的選擇：</h3>
-                
-                <div className="space-y-3">
-                  {currentEvent.options.map((option) => (
-                    <button 
-                      key={option.option_id}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAction(option.option_id as 'A' | 'B');
-                      }}
-                      className="w-full text-left p-3 prophet-card border border-[var(--prophet-border)] hover:border-[var(--prophet-dark)] transition-all prophet-text group"
-                      disabled={loading}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span><strong>{option.option_id}:</strong> {option.description}</span>
-                        <ChevronRight size={16} className="text-[var(--prophet-accent)] group-hover:text-[var(--prophet-dark)]" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="mt-6 pt-4 border-t border-[var(--prophet-border)]">
-                  <div className="text-center mb-3">
-                    <span className="prophet-small-text">進度: {eventHistory.length}/3 個選擇</span>
-                  </div>
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleQuickFinish();
-                    }}
-                    className="w-full prophet-button py-2 px-4 text-sm"
-                    disabled={loading}
-                  >
-                    快速結束遊戲（測試用）
-                  </button>
-                </div>
-              </motion.div>
-            )}
+                {event ? (
+                  <Typewriter
+                    text={event.event_description}
+                    onTick={scrollEventToBottomIfNeeded}
+                  />
+                ) : loadingEvent ? (
+                  "正在載入事件..."
+                ) : (
+                  "尚未取得事件，請稍後或返回首頁"
+                )}
+              </div>
 
-            {loading && (
-              <div className="text-center prophet-text opacity-70">
-                正在處理您的選擇...
-              </div>
-            )}
-            
-            {/* 自由輸入框 */}
-            <div className="mt-6 pt-4 border-t border-[var(--prophet-border)]">
-              <div className="flex gap-3">
-                <input 
-                  type="text" 
-                  maxLength={30}
-                  className="flex-1 prophet-input px-3 py-2 text-sm"
-                  placeholder="或輸入自己的行動 (30字內)..."
-                  value={freeInput}
-                  onChange={e => setFreeInput(e.target.value)}
-                  disabled={loading}
-                />
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleFreeSubmit();
-                  }}
-                  disabled={!freeInput.trim() || loading}
-                  className="prophet-button px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              <div className="h-[180px]">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3"
                 >
-                  <Send size={16} />
-                </button>
+                  <div className="prophet-divider mb-3"></div>
+                  <h3 className="prophet-subtitle text-base mb-2">
+                    您的選擇：
+                  </h3>
+
+                  <div className="space-y-2">
+                    {(event?.options ?? []).map((option: any) => (
+                      <button
+                        key={option.option_id}
+                        onClick={(e: React.MouseEvent) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectOption(option.option_id);
+                        }}
+                        className="w-full text-left py-2 px-3 prophet-card border border-[var(--prophet-border)] hover:border-[var(--prophet-dark)] transition-all prophet-text group"
+                        disabled={submitting || loadingEvent}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span>
+                            <strong>{option.option_id}:</strong>{" "}
+                            {option.description}
+                          </span>
+                          <ChevronRight
+                            size={16}
+                            className="text-[var(--prophet-accent)] group-hover:text-[var(--prophet-dark)]"
+                          />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-[var(--prophet-border)]">
+                    <div className="text-center mb-2">
+                      <span className="prophet-small-text">
+                        {progress
+                          ? `回合 ${progress.turn}/${progress.total_turns}｜階段：${progress.phase} (${progress.phase_progress})`
+                          : "等待遊戲進度..."}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
-              <div className="mt-2 text-right">
-                <span className="prophet-small-text opacity-60">{freeInput.length}/30</span>
-              </div>
+
+              {(loadingEvent || submitting) && (
+                <div className="text-center prophet-text opacity-70">
+                  {submitting ? "正在處理您的選擇..." : "正在載入事件..."}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-      
-      {/* 錯誤訊息 */}
+
+      {shouldFinish && !pendingResult && (
+        <div className="mx-6 mb-4 border border-amber-700 bg-amber-50 p-4">
+          <p className="prophet-text text-amber-800 text-sm">
+            已到最後回合，提交選擇後將自動生成結局。
+          </p>
+        </div>
+      )}
+
       {error && (
         <div className="mx-6 mb-4 border-2 border-red-800 bg-red-50 p-4">
-          <p className="prophet-text text-red-800 text-sm mb-2">{error}</p>
+          <p className="prophet-text text-red-800 text-sm mb-2">
+            {renderErrorMessage(error)}
+          </p>
           <button
-            onClick={() => setError(null)}
+            onClick={resetError}
             className="prophet-text text-red-600 text-xs underline hover:no-underline"
           >
             關閉

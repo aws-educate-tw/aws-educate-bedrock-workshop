@@ -1,19 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* 預言家日報色彩 */
 :root {
-  --prophet-bg: #f8f6f0;          /* 舊報紙背景 */
-  --prophet-dark: #1a1a1a;        /* 深黑墨色 */
-  --prophet-text: #2d2d2d;        /* 報紙文字色 */
-  --prophet-accent: #8b6914;      /* 金色裝飾 */
-  --prophet-border: #000000;      /* 黑色邊框 */
-  --prophet-light: #f8f6f0;       /* 米色區塊 - 改為與背景同色 */
+  --prophet-bg: #f8f6f0; /* 舊報紙背景 */
+  --prophet-dark: #1a1a1a; /* 深黑墨色 */
+  --prophet-text: #2d2d2d; /* 報紙文字色 */
+  --prophet-accent: #8b6914; /* 金色裝飾 */
+  --prophet-border: #000000; /* 黑色邊框 */
+  --prophet-light: #f8f6f0; /* 米色區塊 - 改為與背景同色 */
   --prophet-shadow: rgba(0, 0, 0, 0.3); /* 陰影色 */
-  --prophet-gray: #666666;        /* 灰色文字 */
-  
+  --prophet-gray: #666666; /* 灰色文字 */
+
   /* 向後兼容 */
   --newspaper-bg: var(--prophet-bg);
   --newspaper-dark: var(--prophet-dark);
@@ -30,16 +30,27 @@
 
 body {
   margin: 0;
-  font-family: 'Crimson Text', serif;
+  font-family: "Crimson Text", serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--newspaper-bg);
   color: var(--newspaper-text);
   min-height: 100vh;
-  background-image: 
-    radial-gradient(circle at 20% 50%, rgba(139, 115, 85, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(139, 115, 85, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(139, 115, 85, 0.03) 0%, transparent 50%),
+  background-image: radial-gradient(
+      circle at 20% 50%,
+      rgba(139, 115, 85, 0.03) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(139, 115, 85, 0.03) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 40% 80%,
+      rgba(139, 115, 85, 0.03) 0%,
+      transparent 50%
+    ),
     repeating-linear-gradient(
       0deg,
       transparent,
@@ -51,7 +62,7 @@ body {
 
 /* 報紙標題字體 */
 .newspaper-title {
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -60,14 +71,14 @@ body {
 
 /* 報紙內文字體 */
 .newspaper-text {
-  font-family: 'Crimson Text', serif;
+  font-family: "Crimson Text", serif;
   line-height: 1.6;
   color: var(--newspaper-text);
 }
 
 /* 復古標題字體 */
 .vintage-title {
-  font-family: 'Old Standard TT', serif;
+  font-family: "Old Standard TT", serif;
   font-weight: 700;
   color: var(--newspaper-dark);
 }
@@ -76,24 +87,29 @@ body {
 .newspaper-card {
   background: var(--newspaper-light);
   border: 2px solid var(--newspaper-border);
-  box-shadow: 
-    0 2px 8px var(--newspaper-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 0 0 1px rgba(139, 115, 85, 0.1);
+  box-shadow: 0 2px 8px var(--newspaper-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(139, 115, 85, 0.1);
   position: relative;
   transition: all 0.3s ease;
 }
 
 .newspaper-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(139, 115, 85, 0.02) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(139, 115, 85, 0.02) 0%, transparent 50%),
+  background-image: radial-gradient(
+      circle at 25% 25%,
+      rgba(139, 115, 85, 0.02) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 75% 75%,
+      rgba(139, 115, 85, 0.02) 0%,
+      transparent 50%
+    ),
     repeating-linear-gradient(
       45deg,
       transparent,
@@ -105,10 +121,8 @@ body {
 }
 
 .newspaper-card:hover {
-  box-shadow: 
-    0 4px 12px var(--newspaper-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    0 0 0 1px rgba(139, 115, 85, 0.2);
+  box-shadow: 0 4px 12px var(--newspaper-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 0 1px rgba(139, 115, 85, 0.2);
   transform: translateY(-1px);
 }
 
@@ -117,7 +131,7 @@ body {
   background: var(--newspaper-dark);
   color: var(--newspaper-light);
   border: 2px solid var(--newspaper-dark);
-  font-family: 'Old Standard TT', serif;
+  font-family: "Old Standard TT", serif;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -127,7 +141,7 @@ body {
 }
 
 .newspaper-button::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
@@ -163,15 +177,14 @@ body {
   background: var(--newspaper-light);
   border: 2px solid var(--newspaper-border);
   color: var(--newspaper-text);
-  font-family: 'Crimson Text', serif;
+  font-family: "Crimson Text", serif;
   transition: all 0.3s ease;
   position: relative;
 }
 
 .newspaper-input:focus {
   border-color: var(--newspaper-accent);
-  box-shadow: 
-    0 0 0 2px rgba(139, 115, 85, 0.1),
+  box-shadow: 0 0 0 2px rgba(139, 115, 85, 0.1),
     0 2px 8px var(--newspaper-shadow);
   outline: none;
   background: #fefcf7;
@@ -190,7 +203,7 @@ body {
 }
 
 .newspaper-divider::before {
-  content: '◆';
+  content: "◆";
   position: absolute;
   top: -8px;
   left: 50%;
@@ -204,15 +217,14 @@ body {
 /* 報紙照片框 */
 .newspaper-photo {
   border: 3px solid var(--newspaper-dark);
-  box-shadow: 
-    0 2px 8px var(--newspaper-shadow),
+  box-shadow: 0 2px 8px var(--newspaper-shadow),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   filter: sepia(30%) contrast(1.1) brightness(0.9) grayscale(10%);
   position: relative;
 }
 
 .newspaper-photo::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -274,7 +286,7 @@ body {
 
 .newspaper-masthead::before,
 .newspaper-masthead::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   width: 100px;
@@ -306,23 +318,23 @@ body {
   position: absolute;
   left: -0.5rem;
   top: -1rem;
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
 }
 
 /* 報紙分隔線增強 */
 .newspaper-divider.ornate::before {
-  content: '❦';
+  content: "❦";
   font-size: 16px;
 }
 
 .newspaper-divider.simple::before {
-  content: '●';
+  content: "●";
   font-size: 8px;
 }
 
 /* 報紙標題樣式增強 */
 .newspaper-headline {
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -333,7 +345,7 @@ body {
 
 .newspaper-headline::before,
 .newspaper-headline::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   width: 50px;
@@ -351,7 +363,7 @@ body {
 
 /* 報紙副標題 */
 .newspaper-subtitle {
-  font-family: 'Old Standard TT', serif;
+  font-family: "Old Standard TT", serif;
   font-style: italic;
   text-align: center;
   color: var(--newspaper-accent);
@@ -360,7 +372,7 @@ body {
 
 /* 報紙日期線 */
 .newspaper-dateline {
-  font-family: 'Crimson Text', serif;
+  font-family: "Crimson Text", serif;
   font-size: 0.875rem;
   text-align: center;
   color: var(--newspaper-accent);
@@ -380,7 +392,7 @@ body {
 }
 
 .newspaper-article::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   left: -2px;
@@ -405,16 +417,27 @@ body {
 }
 
 .newspaper-aged::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    radial-gradient(circle at 20% 30%, rgba(139, 115, 85, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(139, 115, 85, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 40% 80%, rgba(139, 115, 85, 0.04) 0%, transparent 40%);
+  background-image: radial-gradient(
+      circle at 20% 30%,
+      rgba(139, 115, 85, 0.08) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(139, 115, 85, 0.06) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 40% 80%,
+      rgba(139, 115, 85, 0.04) 0%,
+      transparent 40%
+    );
   pointer-events: none;
 }
 
@@ -424,7 +447,7 @@ body {
 }
 
 .newspaper-fold::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 50%;
@@ -443,8 +466,11 @@ body {
 
 /* 報紙印刷點效果 */
 .newspaper-print {
-  background-image: 
-    radial-gradient(circle at 1px 1px, rgba(139, 115, 85, 0.15) 1px, transparent 0);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(139, 115, 85, 0.15) 1px,
+    transparent 0
+  );
   background-size: 20px 20px;
 }
 
@@ -454,15 +480,26 @@ body {
 }
 
 .newspaper-worn::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: 
-    linear-gradient(45deg, transparent 48%, rgba(139, 115, 85, 0.1) 49%, rgba(139, 115, 85, 0.1) 51%, transparent 52%),
-    linear-gradient(-45deg, transparent 48%, rgba(139, 115, 85, 0.1) 49%, rgba(139, 115, 85, 0.1) 51%, transparent 52%);
+  background: linear-gradient(
+      45deg,
+      transparent 48%,
+      rgba(139, 115, 85, 0.1) 49%,
+      rgba(139, 115, 85, 0.1) 51%,
+      transparent 52%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 48%,
+      rgba(139, 115, 85, 0.1) 49%,
+      rgba(139, 115, 85, 0.1) 51%,
+      transparent 52%
+    );
   background-size: 4px 4px;
   pointer-events: none;
 }
@@ -472,21 +509,21 @@ body {
   .newspaper-column {
     column-count: 1;
   }
-  
+
   .newspaper-masthead::before,
   .newspaper-masthead::after {
     width: 50px;
   }
-  
+
   .newspaper-headline::before,
   .newspaper-headline::after {
     width: 30px;
   }
-  
+
   .newspaper-headline::before {
     left: -40px;
   }
-  
+
   .newspaper-headline::after {
     right: -40px;
   }
@@ -505,54 +542,76 @@ body {
 
 /* Daily Prophet 專用樣式 */
 .daily-prophet-masthead {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   letter-spacing: -0.02em;
 }
 
 .daily-prophet-text {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: "Cormorant Garamond", serif;
   line-height: 1.4;
 }
 
 .daily-prophet-label {
-  font-family: 'Old Standard TT', serif;
+  font-family: "Old Standard TT", serif;
   font-variant: small-caps;
 }
 
 /* 印刷油墨效果 */
 .ink-shadow {
-  text-shadow: 2px 2px 0px rgba(45, 24, 16, 0.1), 1px 1px 0px rgba(45, 24, 16, 0.05);
+  text-shadow: 2px 2px 0px rgba(45, 24, 16, 0.1),
+    1px 1px 0px rgba(45, 24, 16, 0.05);
 }
 
 /* 報紙照片框效果 */
 .newspaper-photo-frame {
-  box-shadow: 
-    0 0 0 2px #ffffff,
-    0 0 0 4px #2d1810,
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2d1810,
     0 4px 12px rgba(45, 24, 16, 0.2);
 }
 
 /* 印刷網點效果 */
 .print-dots {
-  background-image: radial-gradient(circle at 1px 1px, rgba(45, 24, 16, 0.8) 1px, transparent 0);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(45, 24, 16, 0.8) 1px,
+    transparent 0
+  );
   background-size: 3px 3px;
 }
 
 /* 魔法動態效果 */
 @keyframes bounce-a {
-  0%, 90%, 100% { transform: translateY(0); }
-  5% { transform: translateY(-8px); }
+  0%,
+  90%,
+  100% {
+    transform: translateY(0);
+  }
+  5% {
+    transform: translateY(-8px);
+  }
 }
 
 @keyframes sparkle {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.1); }
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }
 
 @keyframes shimmer {
-  0% { opacity: 0.5; }
-  50% { opacity: 0.8; }
-  100% { opacity: 0.5; }
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes fadeInUp {
@@ -567,8 +626,14 @@ body {
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 5px rgba(139, 115, 85, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(139, 115, 85, 0.6), 0 0 30px rgba(139, 115, 85, 0.4); }
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(139, 115, 85, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(139, 115, 85, 0.6),
+      0 0 30px rgba(139, 115, 85, 0.4);
+  }
 }
 
 /* 星星分隔線閃爍效果 */
@@ -611,13 +676,18 @@ body {
 }
 
 .newspaper-button:hover::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 70%
+  );
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
@@ -633,13 +703,17 @@ body {
 }
 
 .magic-image:hover::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.3) 100%);
+  background: radial-gradient(
+    circle at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
   pointer-events: none;
 }
 
@@ -654,7 +728,7 @@ body {
 }
 
 .newspaper-title::after {
-  content: '✦';
+  content: "✦";
   position: absolute;
   top: -10px;
   right: -20px;
@@ -676,24 +750,35 @@ body {
 }
 
 .magic-button:hover::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(139, 115, 85, 0.1), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(139, 115, 85, 0.1),
+    transparent
+  );
   animation: shimmer 0.8s ease-in-out;
 }
 
 /* 打字機光標效果 */
 @keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
 }
 
 .typewriter-cursor::after {
-  content: '|';
+  content: "|";
   animation: blink 1s infinite;
   color: var(--newspaper-accent);
 }
@@ -705,8 +790,7 @@ body {
 
 .newspaper-card:hover {
   transform: translateY(-5px) scale(1.01);
-  box-shadow: 
-    0 10px 25px var(--newspaper-shadow),
+  box-shadow: 0 10px 25px var(--newspaper-shadow),
     0 0 20px rgba(139, 115, 85, 0.1);
 }
 /* 魔法分數效果 */
@@ -715,7 +799,7 @@ body {
 }
 
 .magic-score::before {
-  content: '✨';
+  content: "✨";
   position: absolute;
   top: -10px;
   right: -15px;
@@ -724,7 +808,7 @@ body {
 }
 
 .magic-score::after {
-  content: '⭐';
+  content: "⭐";
   position: absolute;
   bottom: -5px;
   left: -10px;
@@ -756,7 +840,7 @@ body {
 }
 
 .achievement-badge::before {
-  content: '👑';
+  content: "👑";
   position: absolute;
   top: -8px;
   right: -8px;
@@ -768,12 +852,16 @@ body {
   text-center: true;
   padding: 2rem 0;
   border-bottom: 2px solid var(--newspaper-border);
-  background: linear-gradient(to bottom, var(--newspaper-light), var(--newspaper-bg));
+  background: linear-gradient(
+    to bottom,
+    var(--newspaper-light),
+    var(--newspaper-bg)
+  );
   position: relative;
 }
 
 .newspaper-supplement-title {
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--newspaper-dark);
@@ -783,7 +871,7 @@ body {
 }
 
 .newspaper-supplement-subtitle {
-  font-family: 'Old Standard TT', serif;
+  font-family: "Old Standard TT", serif;
   font-size: 1rem;
   color: var(--newspaper-accent);
   font-style: italic;
@@ -800,7 +888,7 @@ body {
 
 .newspaper-supplement-divider::before,
 .newspaper-supplement-divider::after {
-  content: '';
+  content: "";
   height: 1px;
   background: var(--newspaper-accent);
   flex: 1;
@@ -843,22 +931,20 @@ body {
   margin-top: 0.5rem;
 }
 /* 預言家日報主框架 */
-.prophet-page {
+/* .prophet-page {
   background: var(--prophet-light);
   border: 4px solid var(--prophet-border);
-  box-shadow: 
-    0 0 0 2px var(--prophet-light),
-    0 0 0 6px var(--prophet-border),
+  box-shadow: 0 0 0 2px var(--prophet-light), 0 0 0 6px var(--prophet-border),
     0 8px 16px var(--prophet-shadow);
   position: relative;
   margin: 20px;
   min-height: calc(100vh - 40px);
-}
+} */
 
 /* 預言家日報標題字體 */
 /* 魔法標題動畫效果 */
 .prophet-masthead {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-weight: 700;
   font-size: 4rem;
   text-transform: uppercase;
@@ -882,7 +968,7 @@ body {
 }
 
 .prophet-title {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -891,7 +977,7 @@ body {
 }
 
 .prophet-headline {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -901,7 +987,7 @@ body {
 
 /* 預言家日報副標題字體 */
 .prophet-subtitle {
-  font-family: 'Old Standard TT', serif;
+  font-family: "Old Standard TT", serif;
   font-weight: 600;
   color: var(--prophet-dark);
   text-transform: uppercase;
@@ -910,17 +996,16 @@ body {
 
 /* 預言家日報內文字體 */
 .prophet-text {
-  font-family: 'Crimson Text', serif;
+  font-family: "Crimson Text", serif;
   line-height: 1.4;
   color: var(--prophet-text);
   font-size: 0.9rem;
 }
 
 .prophet-small-text {
-  font-family: 'Crimson Text', serif;
-  line-height: 1.3;
+  font-family: "Crimson Text", serif;
   color: var(--prophet-text);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 /* 預言家日報文章框 */
@@ -932,7 +1017,7 @@ body {
 }
 
 .prophet-article::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 4px;
   left: 4px;
@@ -955,7 +1040,7 @@ body {
   background: var(--prophet-dark);
   color: var(--prophet-light);
   border: 2px solid var(--prophet-border);
-  font-family: 'Old Standard TT', serif;
+  font-family: "Old Standard TT", serif;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -975,7 +1060,7 @@ body {
   background: rgba(248, 246, 240, 0.8);
   border: 1px solid var(--prophet-border);
   color: var(--prophet-text);
-  font-family: 'Crimson Text', serif;
+  font-family: "Crimson Text", serif;
   transition: all 0.2s ease;
 }
 
@@ -988,7 +1073,6 @@ body {
 
 /* 預言家日報照片框 */
 .prophet-photo {
-  border: 2px solid var(--prophet-border);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   filter: sepia(20%) contrast(1.2) brightness(0.95) grayscale(30%);
 }
@@ -1001,7 +1085,7 @@ body {
 }
 
 .prophet-divider::before {
-  content: '★';
+  content: "★";
   position: absolute;
   top: -10px;
   left: 50%;
@@ -1014,7 +1098,7 @@ body {
 
 /* 預言家日報日期線 */
 .prophet-dateline {
-  font-family: 'Old Standard TT', serif;
+  font-family: "Old Standard TT", serif;
   font-size: 0.8rem;
   text-align: center;
   color: var(--prophet-gray);
@@ -1027,29 +1111,84 @@ body {
 }
 
 /* 向後兼容的別名 */
-.newspaper-title { @apply prophet-title; }
-.newspaper-text { @apply prophet-text; }
-.vintage-title { @apply prophet-subtitle; }
-.newspaper-card { @apply prophet-card; }
-.newspaper-button { @apply prophet-button; }
-.newspaper-input { @apply prophet-input; }
-.newspaper-photo { @apply prophet-photo; }
-.newspaper-divider { @apply prophet-divider; }
+.newspaper-title {
+  @apply prophet-title;
+}
+.newspaper-text {
+  @apply prophet-text;
+}
+.vintage-title {
+  @apply prophet-subtitle;
+}
+.newspaper-card {
+  @apply prophet-card;
+}
+.newspaper-button {
+  @apply prophet-button;
+}
+.newspaper-input {
+  @apply prophet-input;
+}
+.newspaper-photo {
+  @apply prophet-photo;
+}
+.newspaper-divider {
+  @apply prophet-divider;
+}
+/* 外層：桌面留白 */
+body {
+  margin: 0;
+  padding: 20px;
+  overflow: hidden; /* 防止 body 自己滾 */
+}
+
+/* 預言家日報：一張剛剛好的紙 */
 .prophet-page {
-  min-height: 100vh;
+  /* 尺寸：扣掉 body 的 padding */
+  height: calc(100vh - 40px);
+  box-sizing: border-box;
+
+  /* 紙張外觀 */
   background: var(--prophet-bg);
-  color: var(--prophet-text);
-  font-family: var(--prophet-font-body);
+  border: 4px solid var(--prophet-border);
+  box-shadow: 0 0 0 2px var(--prophet-light), 0 0 0 6px var(--prophet-border),
+    0 8px 16px var(--prophet-shadow);
+
+  /* 版型 */
   display: flex;
   flex-direction: column;
   position: relative;
-  
-  /* 細微的紙張纖維紋理 */
-  background-image: 
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 116, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(120, 119, 116, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120, 119, 116, 0.02) 0%, transparent 50%);
-  
+
+  /* 內距（紙張邊框到內容） */
+  padding: 16px;
+  overflow: hidden;
+
+  /* 紙張纖維紋理 */
+  background-image: radial-gradient(
+      circle at 20% 80%,
+      rgba(120, 119, 116, 0.03) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(120, 119, 116, 0.03) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 40% 40%,
+      rgba(120, 119, 116, 0.02) 0%,
+      transparent 50%
+    );
   background-size: 150px 150px, 200px 200px, 100px 100px;
   background-position: 20% 80%, 80% 20%, 40% 40%;
+
+  color: var(--prophet-text);
+  font-family: var(--prophet-font-body);
+}
+
+.prophet-scroll {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  min-height: 0; /* 很重要：讓 flex 子元素可以真的縮、才會出現滾動 */
 }
