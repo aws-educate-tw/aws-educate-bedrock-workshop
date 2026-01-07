@@ -17,6 +17,10 @@ export const HomePage: React.FC = () => {
   const { sessionId, loading, error, initializeSession } = useSession();
 
   const [titleAnimated, setTitleAnimated] = useState(false);
+  const [apiGatewayUrl, setApiGatewayUrl] = useState(
+    (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+      `${window.location.origin}/api`
+  );
   const [knowledgeBaseId, setKnowledgeBaseId] = useState(
     (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) || ""
   );
@@ -84,6 +88,11 @@ export const HomePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const apiUrl =
+      apiGatewayUrl.trim() ||
+      (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+      `${window.location.origin}/api`;
+
     const kbId =
       knowledgeBaseId.trim() ||
       (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ||
@@ -93,7 +102,7 @@ export const HomePage: React.FC = () => {
     setShouldNavigate(false);
 
     try {
-      await initializeSession(kbId);
+      await initializeSession(kbId, apiUrl);
       setStatusMessage("魔法背景生成完成，正在前往冒險...");
       setShouldNavigate(true);
     } catch (err) {
@@ -200,6 +209,20 @@ export const HomePage: React.FC = () => {
             <div className="prophet-divider mb-4"></div>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <label className="block prophet-text font-bold text-sm">
+                  魔法 API 網址
+                </label>
+                <input
+                  type="text"
+                  className="w-full prophet-input px-3 py-2 text-sm"
+                  placeholder="例：https://api.example.com/api 或 http://localhost:3000"
+                  value={apiGatewayUrl}
+                  onChange={(e) => setApiGatewayUrl(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
               <div className="space-y-2">
                 <label className="block prophet-text font-bold text-sm">
                   魔法知識庫 ID

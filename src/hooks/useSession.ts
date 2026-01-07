@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { generateBackground } from "../services/api/endpoints";
+import { generateBackground, setApiBaseUrl } from "../services/api/endpoints";
 import { ApiError, GenerateBackgroundResponse } from "../services/api/types";
 import { SessionService } from "../services/session";
 
@@ -25,41 +25,49 @@ export function useSession() {
   /**
    * 初始化新遊戲 session
    */
-  const initializeSession = useCallback(async (knowledgeBaseId: string) => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  const initializeSession = useCallback(
+    async (knowledgeBaseId: string, apiUrl?: string) => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    try {
-      const response = await generateBackground({
-        knowledge_base_id: knowledgeBaseId,
-      });
+      try {
+        // 若提供了 API URL，設定它
+        if (apiUrl) {
+          setApiBaseUrl(apiUrl);
+        }
 
-      // 保存 session_id
-      SessionService.saveSessionId(response.session_id);
+        const response = await generateBackground({
+          knowledge_base_id: knowledgeBaseId,
+        });
 
-      setState((prev) => ({
-        ...prev,
-        data: response,
-        sessionId: response.session_id,
-        loading: false,
-        hasStoredSession: true,
-      }));
+        // 保存 session_id
+        SessionService.saveSessionId(response.session_id);
 
-      return response;
-    } catch (err) {
-      const apiError =
-        err instanceof ApiError
-          ? err
-          : new ApiError(null, "network", String(err));
+        setState((prev) => ({
+          ...prev,
+          data: response,
+          sessionId: response.session_id,
+          loading: false,
+          hasStoredSession: true,
+        }));
 
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: apiError,
-      }));
+        return response;
+      } catch (err) {
+        const apiError =
+          err instanceof ApiError
+            ? err
+            : new ApiError(null, "network", String(err));
 
-      throw apiError;
-    }
-  }, []);
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: apiError,
+        }));
+
+        throw apiError;
+      }
+    },
+    []
+  );
 
   /**
    * 清除 session（重新開始）

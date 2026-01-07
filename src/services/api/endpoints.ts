@@ -22,10 +22,26 @@ function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/$/, "");
 }
 
-const API_BASE_URL = normalizeBaseUrl(
+const DEFAULT_API_BASE_URL = normalizeBaseUrl(
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
     "http://localhost:3000"
 );
+
+let API_BASE_URL = DEFAULT_API_BASE_URL;
+
+/**
+ * 設定 API Base URL（用於運行時更改）
+ */
+export function setApiBaseUrl(baseUrl: string): void {
+  API_BASE_URL = normalizeBaseUrl(baseUrl);
+}
+
+/**
+ * 取得目前的 API Base URL
+ */
+export function getApiBaseUrl(): string {
+  return API_BASE_URL;
+}
 
 /**
  * POST /generate-background
