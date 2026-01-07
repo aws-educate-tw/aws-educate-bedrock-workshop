@@ -45,8 +45,8 @@ export const AchievementPage: React.FC = () => {
    * ESC 快捷鍵導頁：進入下一頁（Report）測試流程
    */
   const handleEscNavigation = useCallback(() => {
-    console.log("[AchievementPage ESC Nav] Navigating to report");
-    navigate("/report");
+    console.log("[AchievementPage ESC Nav] Navigating to home");
+    navigate("/");
   }, [navigate]);
 
   useEffect(() => {

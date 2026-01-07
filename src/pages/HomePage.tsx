@@ -284,7 +284,7 @@ export const HomePage: React.FC = () => {
       {/* 報紙頁腳 */}
       <footer className="border-t-2 border-[var(--prophet-border)] py-4 text-center bg-transparent">
         <div className="prophet-small-text opacity-60">
-          © 2026 The Daily Prophet - Bedrock Workshop | AWS Educate
+          © 2026 AWS Educate - Bedrock Workshop | The Daily Prophet
         </div>
       </footer>
     </div>
