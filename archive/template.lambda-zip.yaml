@@ -5,6 +5,16 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: SAM Template for Lambda Response with Bedrock Model Integration
 
+Parameters:
+  ArtifactsBucketName:
+    Type: String
+    Default: "bedrock-demo-213edq"
+    Description: S3 bucket name that stores workshop artifacts
+  ArtifactsRegion:
+    Type: String
+    Default: "us-east-1"
+    Description: S3 region for the artifacts bucket
+
 Resources:
   # CloudWatch Log Group for API Gateway Access Logs
   ApiGatewayAccessLogs:
@@ -57,7 +67,9 @@ Resources:
   ResponseFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://workshop-demo-artifacts/lambda/lambda.zip
+      CodeUri:
+        Bucket: !Ref ArtifactsBucketName
+        Key: "lambda/lambda.zip"
       Handler: index.handler
       Runtime: nodejs18.x
       Architectures:
@@ -233,6 +245,7 @@ Resources:
       FunctionConfig:
         Comment: "Strip /api prefix before sending to API Gateway"
         Runtime: cloudfront-js-1.0
+
   FrontendSeedRole:
     Type: AWS::IAM::Role
     Properties:
@@ -325,8 +338,108 @@ Resources:
     Type: Custom::FrontendSeed
     Properties:
       ServiceToken: !GetAtt FrontendSeedFunction.Arn
-      SourceUrl: "https://workshop-demo-artifacts.s3.us-east-1.amazonaws.com/frontend/frontend.zip"
+      SourceUrl: !Sub "https://${ArtifactsBucketName}.s3.${ArtifactsRegion}.amazonaws.com/frontend/frontend.zip"
       DestBucket: !Ref FrontendBucket
+
+
+  NpcAssetsBucket:
+    Type: AWS::S3::Bucket
+
+  NpcAssetsLoaderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: NpcAssetsBucketWrite
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt NpcAssetsBucket.Arn
+                  - !Sub "${NpcAssetsBucket.Arn}/*"
+
+  NpcAssetsLoaderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt NpcAssetsLoaderRole.Arn
+      Runtime: python3.11
+      Handler: index.handler
+      Timeout: 300
+      MemorySize: 256
+      Code:
+        ZipFile: |
+          import json
+          import urllib.request
+          import zipfile
+          import boto3
+
+          s3 = boto3.client("s3")
+
+          def send_response(event, context, status, reason=None):
+            response_url = event["ResponseURL"]
+            response_body = {
+              "Status": status,
+              "Reason": reason or f"See details in CloudWatch Log Stream: {context.log_stream_name}",
+              "PhysicalResourceId": event.get("PhysicalResourceId", context.log_stream_name),
+              "StackId": event["StackId"],
+              "RequestId": event["RequestId"],
+              "LogicalResourceId": event["LogicalResourceId"],
+              "Data": {},
+            }
+            data = json.dumps(response_body).encode("utf-8")
+            req = urllib.request.Request(
+              response_url,
+              data=data,
+              headers={"content-type": "", "content-length": str(len(data))},
+              method="PUT",
+            )
+            urllib.request.urlopen(req)
+
+          def handler(event, context):
+            try:
+              if event.get("RequestType") == "Delete":
+                send_response(event, context, "SUCCESS")
+                return
+
+              props = event.get("ResourceProperties", {})
+              bucket = props.get("BucketName")
+              url = props.get("SourceUrl")
+              if not bucket or not url:
+                raise ValueError("BucketName and SourceUrl are required")
+
+              tmp_zip = "/tmp/npc.zip"
+              with urllib.request.urlopen(url) as response, open(tmp_zip, "wb") as f:
+                f.write(response.read())
+
+              with zipfile.ZipFile(tmp_zip, "r") as zip_ref:
+                for name in zip_ref.namelist():
+                  if name.endswith("/"):
+                    continue
+                  with zip_ref.open(name) as obj:
+                    s3.upload_fileobj(obj, bucket, name)
+
+              send_response(event, context, "SUCCESS")
+            except Exception as exc:
+              send_response(event, context, "FAILED", str(exc))
+
+  NpcAssetsLoader:
+    Type: Custom::NpcAssetsLoader
+    Properties:
+      ServiceToken: !GetAtt NpcAssetsLoaderFunction.Arn
+      BucketName: !Ref NpcAssetsBucket
+      SourceUrl: !Sub "https://${ArtifactsBucketName}.s3.${ArtifactsRegion}.amazonaws.com/archive/npc.zip"
 
   ApiGatewayInvokePermission:
     Type: AWS::Lambda::Permission
@@ -340,6 +453,9 @@ Outputs:
   ApiBaseUrl:
     Description: "API Gateway base URL"
     Value: !Sub "https://${ApiGW}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  NpcAssetsBucketName:
+    Description: "S3 bucket for NPC assets"
+    Value: !Ref NpcAssetsBucket
   FrontendBucketName:
     Description: "S3 bucket name for the frontend"
     Value: !Ref FrontendBucket
