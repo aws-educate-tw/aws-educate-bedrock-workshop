@@ -1,0 +1,55 @@
+/**
+ * 本機 session 管理邏輯
+ * 不依賴 Zustand，純粹 localStorage 操作
+ *
+ * localStorage 策略：
+ * - __game_session_id__: 當前進行中的 session_id
+ * - __game_session_timestamp__: session 建立時間戳（可選，便於清理過期 session）
+ */
+
+const SESSION_ID_KEY = "__game_session_id__";
+const SESSION_TIMESTAMP_KEY = "__game_session_timestamp__";
+
+export const SessionService = {
+  /**
+   * 儲存 session_id 與時間戳
+   */
+  saveSessionId(sessionId: string): void {
+    try {
+      localStorage.setItem(SESSION_ID_KEY, sessionId);
+      localStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
+    } catch (err) {
+      console.warn("Failed to save session to localStorage:", err);
+    }
+  },
+
+  /**
+   * 讀取當前 session_id
+   */
+  getSessionId(): string | null {
+    try {
+      return localStorage.getItem(SESSION_ID_KEY);
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * 清除當前 session
+   */
+  clearSessionId(): void {
+    try {
+      localStorage.removeItem(SESSION_ID_KEY);
+      localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+    } catch (err) {
+      console.warn("Failed to clear session:", err);
+    }
+  },
+
+  /**
+   * 檢查 session 是否存在
+   */
+  hasActiveSession(): boolean {
+    return this.getSessionId() !== null;
+  },
+};
