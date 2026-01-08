@@ -3,7 +3,7 @@ const { createSession } = require("../services/session");
 const { backgroundPrompt } = require("../prompts/background");
 const { backgroundSchema } = require("../schemas/background");
 const { tableName } = require("../utils/dynamodb");
-const { generateImage, setCharacterAppearance } = require("../services/imageGenerator");
+const { setCharacterAppearance } = require("../services/imageGenerator");
 
 const generateBackground = async (body) => {
     if (!body.knowledge_base_id) {
@@ -53,9 +53,6 @@ const generateBackground = async (body) => {
         appearance: playerIdentity.appearance || "",
     });
 
-    // 生成背景圖片
-    const image = await generateImage(background);
-
     return {
         statusCode: 200,
         body: JSON.stringify({
@@ -63,7 +60,7 @@ const generateBackground = async (body) => {
             background,
             player_identity: playerIdentity,
             life_goal: lifeGoal,
-            image: image || null,
+            image: null,
         }),
     };
 };
