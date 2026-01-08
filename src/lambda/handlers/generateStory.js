@@ -93,6 +93,8 @@ const generateStory = async (body) => {
             event_description: storyPayload.event_description,
             options: storyPayload.options,
             image: image || null,
+            // 當這是最後一回合時，告訴前端選擇後要生成結局
+            should_generate_result: phaseInfo.isLastTurn,
             // 回傳遊戲進度資訊
             game_progress: {
                 turn: turn + 1,

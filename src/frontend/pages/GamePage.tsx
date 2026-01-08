@@ -132,6 +132,9 @@ export const GamePage: React.FC = () => {
     playerState,
     pendingResult,
     shouldFinish,
+    currentSummary,
+    currentImage,
+    lifeGoal,
     selectOption,
     resetError,
   } = useGameFlow(sessionId);
@@ -274,7 +277,7 @@ export const GamePage: React.FC = () => {
                 style={{ maxWidth: "240px" }}
               >
                 <Base64Image
-                  base64={event?.image || null}
+                  base64={currentImage}
                   alt="遊戲場景"
                   className="w-full h-full"
                 />
@@ -298,11 +301,46 @@ export const GamePage: React.FC = () => {
                 現況說明
               </h3>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
                   <span>年齡</span>
                   <span className="font-bold">
                     {playerState?.age ?? "—"} 歲
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
+                  <span>職業</span>
+                  <span className="font-bold">
+                    {playerState?.careerTitle ?? "—"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
+                  <span>智慧</span>
+                  <span className="font-bold">
+                    {playerState?.wisdom ?? "—"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
+                  <span>財富</span>
+                  <span className="font-bold">
+                    {playerState?.wealth ?? "—"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
+                  <span>人際關係</span>
+                  <span className="font-bold">
+                    {playerState?.relationships ?? "—"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
+                  <span>職涯發展</span>
+                  <span className="font-bold">
+                    {playerState?.careerDevelopment ?? "—"}
                   </span>
                 </div>
 
@@ -313,30 +351,18 @@ export const GamePage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
-                  <span>財務</span>
-                  <span className="font-bold">
-                    {playerState?.wealth ?? "—"}
-                  </span>
-                </div>
-
-                <div className="prophet-small-text leading-snug">
+                <div className="prophet-small-text leading-snug pt-1">
                   <strong>人生目標：</strong>
-                  尚未提供（請參考背景）
+                  {lifeGoal ?? "尚未提供（請參考背景）"}
                 </div>
 
-                {!!playerState?.traits?.length && (
-                  <div className="prophet-small-text">
-                    <strong>特質：</strong>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {playerState.traits.slice(0, 4).map((t: string) => (
-                        <span
-                          key={t}
-                          className="px-2 py-0.5 border border-[var(--prophet-border)] prophet-small-text"
-                        >
-                          {t}
-                        </span>
-                      ))}
+                {currentSummary && (
+                  <div className="prophet-small-text leading-snug border-t border-[var(--prophet-border)] pt-2 mt-2">
+                    <strong>目前狀況：</strong>
+                    <div className="mt-1 h-[60px] overflow-y-auto custom-scrollbar pr-1">
+                      <p className="opacity-90">
+                        <Typewriter text={currentSummary} speed={30} />
+                      </p>
                     </div>
                   </div>
                 )}

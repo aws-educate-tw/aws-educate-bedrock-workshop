@@ -171,6 +171,7 @@ const parseSessionState = (sessionItem) => {
         playerIdentity: {
             gender: getAttrString(playerIdentity.gender),
             appearance: getAttrString(playerIdentity.appearance),
+            age: getAttrNumber(playerState.age),  // 使用 playerState 的當前年齡（會隨遊戲進行而變化）
         },
         history: fromAttr(sessionItem.history) || [],
         turn,

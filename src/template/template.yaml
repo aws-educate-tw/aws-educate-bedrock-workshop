@@ -94,6 +94,11 @@ Resources:
               Action:
                 - bedrock:Retrieve
               Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*"
+            - Effect: Allow
+              Action:
+                - aws-marketplace:ViewSubscriptions
+                - aws-marketplace:Subscribe
+              Resource: "*"
       Events:
         GenerateBackground:
           Type: Api

@@ -39,8 +39,14 @@ export function useSession() {
           knowledge_base_id: knowledgeBaseId,
         });
 
-        // 保存 session_id
+        // 保存 session_id 和背景資料
         SessionService.saveSessionId(response.session_id);
+        SessionService.saveBackgroundData({
+          background: response.background,
+          player_identity: response.player_identity,
+          life_goal: response.life_goal,
+          image: response.image,
+        });
 
         setState((prev) => ({
           ...prev,
