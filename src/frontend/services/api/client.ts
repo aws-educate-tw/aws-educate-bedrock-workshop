@@ -1,6 +1,6 @@
 import { ApiError } from "./types";
 
-const DEFAULT_TIMEOUT_MS = 10000;
+const DEFAULT_TIMEOUT_MS = 60000;
 const MAX_RETRIES = 2;
 const RETRY_BACKOFF_MS = 1000;
 
