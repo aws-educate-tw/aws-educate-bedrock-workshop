@@ -495,7 +495,7 @@ export const GamePage: React.FC = () => {
                       </h3>
 
                       <div className="space-y-2 pb-2">
-                        {(event?.options ?? []).map((option: any, index: number) => (
+                        {(Array.isArray(event?.options) ? event.options : []).map((option: any, index: number) => (
                           <button
                             key={option.option_id}
                             onClick={(e: React.MouseEvent) => {

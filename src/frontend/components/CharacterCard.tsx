@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, User } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Base64Image } from "./Base64Image";
 
 interface CharacterCardProps {
@@ -25,6 +25,14 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   playerIdentity,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // 進入頁面後 1 秒自動展開角色卡
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsOpen(true);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
