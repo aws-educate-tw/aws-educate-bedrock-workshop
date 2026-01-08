@@ -86,8 +86,8 @@ const resolveEvent = async (body) => {
         };
     }
 
-    // 生成結果圖片
-    const image = await generateImage(resolvePayload.event_outcome);
+    // 生成結果圖片（使用 LLM 產生的英文 image_prompt）
+    const image = await generateImage(resolvePayload.image_prompt || resolvePayload.event_outcome);
 
     return {
         statusCode: 200,

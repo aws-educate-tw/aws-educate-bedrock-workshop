@@ -83,8 +83,8 @@ const generateStory = async (body) => {
         };
     }
 
-    // 生成事件圖片
-    const image = await generateImage(storyPayload.event_description);
+    // 生成事件圖片（使用 LLM 產生的英文 image_prompt）
+    const image = await generateImage(storyPayload.image_prompt || storyPayload.event_description);
 
     return {
         statusCode: 200,

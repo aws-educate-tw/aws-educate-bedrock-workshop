@@ -40,7 +40,8 @@ const resultPrompt = ChatPromptTemplate.fromMessages([
 - achievements（Array，2-4個成就，每個含 title, description, icon）
 - key_decisions（Array，恰好 3 個關鍵抉擇，每個含 event_description, decision, impact）
 - ending_type（String，結局類型如：傳奇、輝煌、成功、平凡、坎坷、悲劇）
-- ending_title（String，結局標題，如「銀月學院的傳奇教授」）`,
+- ending_title（String，結局標題，如「銀月學院的傳奇教授」）
+- image_prompt（String，英文圖片生成提示詞，20-40字，描述角色人生結局的象徵性場景，例如："An elderly wise wizard standing proudly in a grand magical academy, surrounded by grateful students"）`,
     ],
 ]);
 

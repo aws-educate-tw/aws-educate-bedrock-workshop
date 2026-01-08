@@ -6,7 +6,7 @@ const client = new BedrockRuntimeClient({
 
 const MODEL_ID = "amazon.nova-canvas-v1:0";
 
-const STYLE_PREFIX = `Stylized 2D digital art illustration in "Harry Potter: Magic Awakened" style - muted moody colors, dramatic rim lighting, gothic whimsical "Dark Academia" aesthetic. The scene and environment should be the main focus, with rich details in the background.`;
+const STYLE_PREFIX = `Stylized 2D digital art illustration in "Harry Potter: Magic Awakened" style - muted moody colors, dramatic rim lighting, gothic whimsical "Dark Academia" aesthetic.`;
 
 // 儲存當前角色外觀資訊（用於生成一致的角色圖像）
 let currentCharacterAppearance = null;
@@ -46,9 +46,9 @@ const translateGender = (gender) => {
 };
 
 /**
- * 構建角色描述，強調年齡和性別
+ * 構建角色描述（用於肖像圖，強調人物）
  */
-const buildCharacterDescription = () => {
+const buildCharacterDescriptionForPortrait = () => {
     if (!currentCharacterAppearance) return "";
 
     const { gender, appearance, age } = currentCharacterAppearance;
@@ -76,33 +76,86 @@ const buildCharacterDescription = () => {
         }
     }
 
-    // 構建強調性的角色描述
-    return `IMPORTANT - Main character MUST be: a ${ageDescription}, ${englishGender}. Physical appearance: ${appearance || "average build"}.`;
+    return `a ${ageDescription} ${englishGender}, ${appearance || "average build"}`;
 };
 
 /**
- * 使用 Amazon Nova Canvas 生成圖片
+ * 構建簡短角色描述（用於場景圖，不強調人物）
+ */
+const buildCharacterDescriptionForScene = () => {
+    if (!currentCharacterAppearance) return "";
+
+    const { gender, age } = currentCharacterAppearance;
+    const englishGender = translateGender(gender);
+
+    // 簡化的年齡描述
+    let ageDesc = "young";
+    if (age) {
+        if (age <= 12) ageDesc = "young";
+        else if (age <= 18) ageDesc = "teenage";
+        else if (age <= 35) ageDesc = "young adult";
+        else if (age <= 55) ageDesc = "middle-aged";
+        else ageDesc = "elderly";
+    }
+
+    return `${ageDesc} ${englishGender}`;
+};
+
+/**
+ * 生成角色肖像圖（專用於 generateBackground，只有人物）
+ * @returns {Promise<string|null>} - Base64 編碼的圖片，失敗時返回 null
+ */
+const generateCharacterPortrait = async () => {
+    const characterDescription = buildCharacterDescriptionForPortrait();
+
+    if (!characterDescription) {
+        return null;
+    }
+
+    const prompt = `${STYLE_PREFIX}
+
+Character portrait of ${characterDescription}.
+
+Framing: Upper body portrait or bust shot. Focus entirely on the character with a simple, blurred background. Show the character's face and upper body clearly. Neutral pose, looking slightly towards the camera.`;
+
+    return await invokeImageGeneration(prompt);
+};
+
+/**
+ * 使用 Amazon Nova Canvas 生成場景圖片（角色在情境中）
  * @param {string} sceneDescription - 場景描述
  * @returns {Promise<string|null>} - Base64 編碼的圖片，失敗時返回 null
  */
 const generateImage = async (sceneDescription) => {
-    const characterDescription = buildCharacterDescription();
+    const characterDesc = buildCharacterDescriptionForScene();
 
-    // 構建更結構化的 prompt，強調場景與角色的平衡
+    // 構建 prompt：場景優先，角色融入場景中
     let prompt;
-    if (characterDescription) {
+    if (characterDesc) {
         prompt = `${STYLE_PREFIX}
 
-Scene description: ${sceneDescription}
+${sceneDescription}
 
-Character in scene - ${characterDescription}
+The scene features a ${characterDesc} as the main subject.
 
-Composition: Wide or medium shot showing both the detailed environment AND the character. The environment and action should be equally important as the character. Show the character interacting with or situated within the scene described above.`;
+Composition: Full scene view with the character visible in the environment. Show the character's full body at medium distance. The environment and atmosphere are equally important as the character. Do NOT crop to face or upper body only.`;
     } else {
         prompt = `${STYLE_PREFIX}
 
-Scene: ${sceneDescription}`;
+${sceneDescription}
+
+Composition: Full scene view showing the environment and any subjects within it.`;
     }
+
+    return await invokeImageGeneration(prompt);
+};
+
+/**
+ * 呼叫 Bedrock 生成圖片
+ * @param {string} prompt - 圖片生成 prompt
+ * @returns {Promise<string|null>} - Base64 編碼的圖片，失敗時返回 null
+ */
+const invokeImageGeneration = async (prompt) => {
 
     const seed = Math.floor(Math.random() * 858993460);
 
@@ -134,4 +187,4 @@ Scene: ${sceneDescription}`;
     }
 };
 
-module.exports = { generateImage, setCharacterAppearance, getCharacterAppearance, STYLE_PREFIX };
+module.exports = { generateImage, generateCharacterPortrait, setCharacterAppearance, getCharacterAppearance, STYLE_PREFIX };

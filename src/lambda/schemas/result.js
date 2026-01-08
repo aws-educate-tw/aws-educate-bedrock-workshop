@@ -27,6 +27,7 @@ const resultSchema = z.object({
     key_decisions: z.array(keyDecisionSchema).length(3).describe("三個最關鍵的人生抉擇"),
     ending_type: z.string().describe("結局類型（如：傳奇、成功、平凡、悲劇等）"),
     ending_title: z.string().describe("結局標題"),
+    image_prompt: z.string().describe("英文圖片生成提示詞，描述結局場景與角色最終狀態"),
 });
 
 module.exports = { resultSchema, finalScoresSchema, achievementSchema, keyDecisionSchema };

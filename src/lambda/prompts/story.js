@@ -30,7 +30,8 @@ const storyPrompt = ChatPromptTemplate.fromMessages([
 請產生一個人生事件，欄位必須包含：
 - event_id（String）
 - event_description（String，需描述符合目前人生階段的事件）
-- options（陣列，必須恰好包含兩個選項，每個選項含 option_id 和 description）`,
+- options（陣列，必須恰好包含兩個選項，每個選項含 option_id 和 description）
+- image_prompt（String，英文圖片生成提示詞，20-40字，描述事件場景與角色正面臨的情境，例如："A young student standing at a crossroads in a mystical forest, looking uncertain"）`,
     ],
 ]);
 

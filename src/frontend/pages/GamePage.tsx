@@ -135,14 +135,21 @@ export const GamePage: React.FC = () => {
     currentSummary,
     currentImage,
     lifeGoal,
+    showingOutcome,
+    latestEventOutcome,
+    preloading,
+    preloadingResult,
     selectOption,
     resetError,
+    proceedToNextEvent,
+    proceedToResult,
   } = useGameFlow(sessionId);
 
   const { setSummaryState } = useAppStore();
 
   const eventTextRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
+  const [customChoice, setCustomChoice] = useState("");
 
   // 若啟用 ESC 測試模式，允許無 sessionId 進入 GamePage
   const escTestMode =
@@ -262,13 +269,13 @@ export const GamePage: React.FC = () => {
         <div className="prophet-dateline">★ 人生模擬進行中 ★</div>
       </header>
 
-      <div className="p-6">
+      <div className="p-6 flex-1 overflow-y-auto min-h-0">
         {/* ✅ 三欄不等寬：12欄格 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
           {/* ① 人物近影（中窄：跟圖片差不多高度） */}
-          <div className="lg:col-span-3">
-            <div className="prophet-article h-full">
-              <h3 className="prophet-headline text-lg mb-3 border-b border-[var(--prophet-border)] pb-2">
+          <div className="lg:col-span-3 min-h-0">
+            <div className="prophet-article h-full overflow-hidden flex flex-col">
+              <h3 className="prophet-headline text-lg mb-3 border-b border-[var(--prophet-border)] pb-2 flex-shrink-0">
                 人物近影
               </h3>
 
@@ -295,13 +302,13 @@ export const GamePage: React.FC = () => {
           </div>
 
           {/* ② 現況說明（窄） */}
-          <div className="lg:col-span-3">
-            <div className="prophet-article h-full">
-              <h3 className="prophet-headline text-lg mb-3 border-b border-[var(--prophet-border)] pb-2">
+          <div className="lg:col-span-3 min-h-0">
+            <div className="prophet-article h-full overflow-hidden flex flex-col">
+              <h3 className="prophet-headline text-lg mb-3 border-b border-[var(--prophet-border)] pb-2 flex-shrink-0">
                 現況說明
               </h3>
 
-              <div className="space-y-2">
+              <div className="space-y-2 flex-1 overflow-y-auto min-h-0 custom-scrollbar">
                 <div className="flex justify-between items-center prophet-text border-b border-[var(--prophet-border)] pb-1">
                   <span>年齡</span>
                   <span className="font-bold">
@@ -358,11 +365,9 @@ export const GamePage: React.FC = () => {
 
                 {currentSummary && (
                   <div className="prophet-small-text leading-snug border-t border-[var(--prophet-border)] pt-2 mt-2">
-                    <strong>目前狀況：</strong>
+                    <strong>角色背景：</strong>
                     <div className="mt-1 h-[60px] overflow-y-auto custom-scrollbar pr-1">
-                      <p className="opacity-90">
-                        <Typewriter text={currentSummary} speed={30} />
-                      </p>
+                      <p className="opacity-90">{currentSummary}</p>
                     </div>
                   </div>
                 )}
@@ -370,96 +375,204 @@ export const GamePage: React.FC = () => {
             </div>
           </div>
 
-          {/* ③ 人生轉折點（寬） */}
-          <div className="lg:col-span-6">
-            <div className="prophet-article h-full">
-              <header className="text-center mb-4 border-b-2 border-[var(--prophet-border)] ">
-                <h2 className="prophet-headline text-2xl mb-2">人生轉折點</h2>
-              </header>
+          {/* ③ 人生轉折點 / 事件結果（寬） */}
+          <div className="lg:col-span-6 min-h-0">
+            <div className="prophet-article h-full overflow-hidden flex flex-col">
+              {showingOutcome ? (
+                /* ===== 顯示事件結果模式 ===== */
+                <>
+                  <header className="text-center mb-4 border-b-2 border-[var(--prophet-border)] flex-shrink-0">
+                    <h2 className="prophet-headline text-2xl mb-2">事件結果</h2>
+                  </header>
 
-              <div
-                ref={eventTextRef}
-                onScroll={handleEventScroll}
-                className="prophet-text text-base leading-relaxed mb-4 h-[120px] overflow-y-auto custom-scrollbar pr-2"
-              >
-                {event ? (
-                  <Typewriter
-                    text={event.event_description}
-                    onTick={scrollEventToBottomIfNeeded}
-                  />
-                ) : loadingEvent ? (
-                  "正在載入事件..."
-                ) : (
-                  "尚未取得事件，請稍後或返回首頁"
-                )}
-              </div>
+                  <div
+                    ref={eventTextRef}
+                    className="prophet-text text-base leading-relaxed mb-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2"
+                  >
+                    {latestEventOutcome ? (
+                      <Typewriter
+                        text={latestEventOutcome}
+                        onTick={scrollEventToBottomIfNeeded}
+                      />
+                    ) : (
+                      "正在處理結果..."
+                    )}
+                  </div>
 
-              <div className="h-[180px]">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-3"
-                >
-                  <div className="prophet-divider mb-3"></div>
-                  <h3 className="prophet-subtitle text-base mb-2">
-                    您的選擇：
-                  </h3>
+                  <div className="flex-shrink-0">
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-3"
+                    >
+                      <div className="prophet-divider mb-3"></div>
 
-                  <div className="space-y-2">
-                    {(event?.options ?? []).map((option: any) => (
-                      <button
-                        key={option.option_id}
-                        onClick={(e: React.MouseEvent) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectOption(option.option_id);
-                        }}
-                        className="w-full text-left py-2 px-3 prophet-card border border-[var(--prophet-border)] hover:border-[var(--prophet-dark)] transition-all prophet-text group"
-                        disabled={submitting || loadingEvent}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span>
-                            <strong>{option.option_id}:</strong>{" "}
-                            {option.description}
+                      <div className="text-center">
+                        {shouldFinish ? (
+                          /* 最後一回合：顯示查看結果按鈕 */
+                          <button
+                            onClick={proceedToResult}
+                            className="px-8 py-4 prophet-button text-lg font-semibold flex items-center justify-center gap-2 mx-auto"
+                            disabled={preloadingResult}
+                          >
+                            {preloadingResult ? (
+                              <>正在生成人生結局...</>
+                            ) : (
+                              <>
+                                <span>查看結果</span>
+                                <ChevronRight size={20} />
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          /* 非最後一回合：顯示繼續下一個故事按鈕 */
+                          <button
+                            onClick={proceedToNextEvent}
+                            className="px-8 py-4 prophet-button text-lg font-semibold flex items-center justify-center gap-2 mx-auto"
+                            disabled={preloading}
+                          >
+                            {preloading ? (
+                              <>正在準備下一個故事...</>
+                            ) : (
+                              <>
+                                <span>繼續下一個故事</span>
+                                <ChevronRight size={20} />
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-[var(--prophet-border)]">
+                        <div className="text-center">
+                          <span className="prophet-small-text">
+                            {progress
+                              ? `回合 ${progress.turn}/${progress.total_turns}｜階段：${progress.phase} (${progress.phase_progress})`
+                              : "等待遊戲進度..."}
                           </span>
-                          <ChevronRight
-                            size={16}
-                            className="text-[var(--prophet-accent)] group-hover:text-[var(--prophet-dark)]"
-                          />
                         </div>
-                      </button>
-                    ))}
+                      </div>
+                    </motion.div>
+                  </div>
+                </>
+              ) : (
+                /* ===== 顯示事件選擇模式 ===== */
+                <>
+                  <header className="text-center mb-4 border-b-2 border-[var(--prophet-border)] flex-shrink-0">
+                    <h2 className="prophet-headline text-2xl mb-2">人生轉折點</h2>
+                  </header>
+
+                  <div
+                    ref={eventTextRef}
+                    onScroll={handleEventScroll}
+                    className="prophet-text text-base leading-relaxed mb-4 h-[100px] flex-shrink-0 overflow-y-auto custom-scrollbar pr-2"
+                  >
+                    {event ? (
+                      <Typewriter
+                        text={event.event_description}
+                        onTick={scrollEventToBottomIfNeeded}
+                      />
+                    ) : loadingEvent ? (
+                      "正在載入事件..."
+                    ) : (
+                      "尚未取得事件，請稍後或返回首頁"
+                    )}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[var(--prophet-border)]">
-                    <div className="text-center mb-2">
-                      <span className="prophet-small-text">
-                        {progress
-                          ? `回合 ${progress.turn}/${progress.total_turns}｜階段：${progress.phase} (${progress.phase_progress})`
-                          : "等待遊戲進度..."}
-                      </span>
+                  <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-3"
+                    >
+                      <div className="prophet-divider mb-3"></div>
+                      <h3 className="prophet-subtitle text-base mb-2">
+                        您的選擇：
+                      </h3>
+
+                      <div className="space-y-2 pb-2">
+                        {(event?.options ?? []).map((option: any, index: number) => (
+                          <button
+                            key={option.option_id}
+                            onClick={(e: React.MouseEvent) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleSelectOption(option.description);
+                            }}
+                            className="w-full text-left py-2 px-3 prophet-card border border-[var(--prophet-border)] hover:border-[var(--prophet-dark)] transition-all prophet-text group"
+                            disabled={submitting || loadingEvent}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span>
+                                {index + 1}. {option.description}
+                              </span>
+                              <ChevronRight
+                                size={16}
+                                className="text-[var(--prophet-accent)] group-hover:text-[var(--prophet-dark)]"
+                              />
+                            </div>
+                          </button>
+                        ))}
+
+                        {/* 自訂選擇輸入框 */}
+                        <div className="mt-3 pt-3 border-t border-[var(--prophet-border)]">
+                          <p className="prophet-small-text mb-2 opacity-80">或輸入您自己的選擇：</p>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={customChoice}
+                              onChange={(e) => setCustomChoice(e.target.value)}
+                              placeholder="輸入自訂選擇..."
+                              className="flex-1 py-2 px-3 border border-[var(--prophet-border)] bg-[var(--prophet-paper)] prophet-text text-sm focus:outline-none focus:border-[var(--prophet-dark)]"
+                              disabled={submitting || loadingEvent}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && customChoice.trim()) {
+                                  e.preventDefault();
+                                  handleSelectOption(customChoice.trim());
+                                  setCustomChoice("");
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (customChoice.trim()) {
+                                  handleSelectOption(customChoice.trim());
+                                  setCustomChoice("");
+                                }
+                              }}
+                              className="px-4 py-2 prophet-button"
+                              disabled={submitting || loadingEvent || !customChoice.trim()}
+                            >
+                              送出
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-[var(--prophet-border)]">
+                        <div className="text-center mb-2">
+                          <span className="prophet-small-text">
+                            {progress
+                              ? `回合 ${progress.turn}/${progress.total_turns}｜階段：${progress.phase} (${progress.phase_progress})`
+                              : "等待遊戲進度..."}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {(loadingEvent || submitting) && (
+                    <div className="text-center prophet-text opacity-70">
+                      {submitting ? "正在處理您的選擇..." : "正在載入事件..."}
                     </div>
-                  </div>
-                </motion.div>
-              </div>
-
-              {(loadingEvent || submitting) && (
-                <div className="text-center prophet-text opacity-70">
-                  {submitting ? "正在處理您的選擇..." : "正在載入事件..."}
-                </div>
+                  )}
+                </>
               )}
             </div>
           </div>
         </div>
       </div>
-
-      {shouldFinish && !pendingResult && (
-        <div className="mx-6 mb-4 border border-amber-700 bg-amber-50 p-4">
-          <p className="prophet-text text-amber-800 text-sm">
-            已到最後回合，提交選擇後將自動生成結局。
-          </p>
-        </div>
-      )}
 
       {error && (
         <div className="mx-6 mb-4 border-2 border-red-800 bg-red-50 p-4">

@@ -39,7 +39,8 @@ const resolveEventPrompt = ChatPromptTemplate.fromMessages([
 - event_outcome（String，描述本次事件的結果）
 - updated_player_state（Object，更新後的玩家狀態，含 age, career, wisdom, wealth, relationships, career_development, wellbeing, traits）
 - stat_changes（Array，數值變動列表，每項含 stat: 數值名稱, change: 變動量, reason: 變動原因說明）
-- current_summary（String，精煉的故事摘要，融入本次事件的重要影響，保持 200-400 字的精簡長度）`,
+- current_summary（String，精煉的故事摘要，融入本次事件的重要影響，保持 200-400 字的精簡長度）
+- image_prompt（String，英文圖片生成提示詞，20-40字，描述角色正在進行的具體動作與場景氛圍，例如："A young wizard holding a glowing wand in a mysterious ancient library, surrounded by floating books"）`,
     ],
 ]);
 
