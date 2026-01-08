@@ -552,18 +552,7 @@ aws cloudformation describe-stacks \
 # 七、Workshop 版（ZIP + S3 + Infrastructure Composer）
 
 Workshop 版會先把 Lambda 打包成 zip 上傳到 S3，並在模板裡直接指定 `CodeUri`，方便參加者匯入 Infrastructure Composer 直接建立自己的專案。
-
-## 1) 打包並上傳 Lambda
-
-```bash
-./scripts/package-lambda.sh <s3-bucket> <s3-key-prefix> [region]
-```
-
-範例：
-
-```bash
-./scripts/package-lambda.sh workshop-demo-artifacts lambda us-east-1
-```
+上傳與公開流程請見 `README.workshop-deploy.md`。
 
 ## 2) 更新模板中的 CodeUri
 
@@ -585,18 +574,4 @@ aws cloudformation deploy \
 
 ## 4) 上傳前端到 S3（打包成 zip）
 
-```bash
-./scripts/deploy-frontend.sh <source-dir> <s3-bucket> <s3-prefix> [region]
-```
-
-範例：
-
-```bash
-./scripts/deploy-frontend.sh test-frontend workshop-demo-artifacts frontend us-east-1
-```
-
-上傳後會產生：
-
-```
-s3://workshop-demo-artifacts/frontend/frontend.zip
-```
+請見 `README.workshop-deploy.md`。
