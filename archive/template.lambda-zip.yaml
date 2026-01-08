@@ -5,6 +5,16 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: SAM Template for Lambda Response with Bedrock Model Integration
 
+Parameters:
+  ArtifactsBucketName:
+    Type: String
+    Default: "bedrock-demo-213edq"
+    Description: S3 bucket name that stores workshop artifacts
+  ArtifactsRegion:
+    Type: String
+    Default: "us-east-1"
+    Description: S3 region for the artifacts bucket
+
 Resources:
   # CloudWatch Log Group for API Gateway Access Logs
   ApiGatewayAccessLogs:
@@ -57,7 +67,7 @@ Resources:
   ResponseFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://workshop-demo-artifacts/lambda/lambda.zip
+      CodeUri: !Sub "s3://${ArtifactsBucketName}/lambda/lambda.zip"
       Handler: index.handler
       Runtime: nodejs18.x
       Architectures:
@@ -140,104 +150,15 @@ Resources:
         AttributeName: ttl
         Enabled: true
 
-  FrontendBucket:
+
+  NpcAssetsBucket:
     Type: AWS::S3::Bucket
-    Properties:
-      WebsiteConfiguration:
-        IndexDocument: index.html
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: false
-        BlockPublicPolicy: false
-        IgnorePublicAcls: false
-        RestrictPublicBuckets: false
 
-  FrontendBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref FrontendBucket
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: AllowPublicRead
-            Effect: Allow
-            Principal: "*"
-            Action: s3:GetObject
-            Resource: !Sub "${FrontendBucket.Arn}/*"
-
-  FrontendDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Enabled: true
-        HttpVersion: http2
-        DefaultRootObject: index.html
-        Origins:
-          - Id: FrontendS3Origin
-            DomainName: !GetAtt FrontendBucket.RegionalDomainName
-            S3OriginConfig: {}
-          - Id: ApiOrigin
-            DomainName: !Sub "${ApiGW}.execute-api.${AWS::Region}.amazonaws.com"
-            OriginPath: "/Prod"
-            CustomOriginConfig:
-              OriginProtocolPolicy: https-only
-        DefaultCacheBehavior:
-          TargetOriginId: FrontendS3Origin
-          ViewerProtocolPolicy: redirect-to-https
-          ForwardedValues:
-            QueryString: false
-            Cookies:
-              Forward: none
-        CacheBehaviors:
-          - PathPattern: "api/*"
-            TargetOriginId: ApiOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - Content-Type
-              Cookies:
-                Forward: all
-            FunctionAssociations:
-              - EventType: viewer-request
-                FunctionARN: !GetAtt ApiPathRewriteFunction.FunctionARN
-
-  ApiPathRewriteFunction:
-    Type: AWS::CloudFront::Function
-    Properties:
-      Name: !Sub "${AWS::StackName}-api-path-rewrite"
-      AutoPublish: true
-      FunctionCode: |
-        function handler(event) {
-          var request = event.request;
-          var uri = request.uri || '';
-          if (uri.startsWith('/api/')) {
-            request.uri = uri.substring(4) || '/';
-          } else if (uri === '/api') {
-            request.uri = '/';
-          }
-          return request;
-        }
-      FunctionConfig:
-        Comment: "Strip /api prefix before sending to API Gateway"
-        Runtime: cloudfront-js-1.0
-  FrontendSeedRole:
+  NpcAssetsLoaderRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -246,87 +167,88 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: FrontendSeedS3Access
+        - PolicyName: NpcAssetsBucketWrite
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - s3:PutObject
-                Resource: !Sub "${FrontendBucket.Arn}/*"
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt NpcAssetsBucket.Arn
+                  - !Sub "${NpcAssetsBucket.Arn}/*"
 
-  FrontendSeedFunction:
+  NpcAssetsLoaderFunction:
     Type: AWS::Lambda::Function
     Properties:
+      Role: !GetAtt NpcAssetsLoaderRole.Arn
       Runtime: python3.11
       Handler: index.handler
-      Role: !GetAtt FrontendSeedRole.Arn
       Timeout: 300
+      MemorySize: 256
       Code:
         ZipFile: |
           import json
           import urllib.request
-          import boto3
-          import io
           import zipfile
-          import mimetypes
+          import boto3
+
+          s3 = boto3.client("s3")
 
           def send_response(event, context, status, reason=None):
-              response_body = {
-                  "Status": status,
-                  "Reason": reason or "OK",
-                  "PhysicalResourceId": event.get("PhysicalResourceId") or context.log_stream_name,
-                  "StackId": event["StackId"],
-                  "RequestId": event["RequestId"],
-                  "LogicalResourceId": event["LogicalResourceId"],
-                  "Data": {}
-              }
-              data = json.dumps(response_body).encode("utf-8")
-              req = urllib.request.Request(
-                  event["ResponseURL"],
-                  data=data,
-                  headers={"content-type": "", "content-length": str(len(data))},
-                  method="PUT",
-              )
-              urllib.request.urlopen(req)
+            response_url = event["ResponseURL"]
+            response_body = {
+              "Status": status,
+              "Reason": reason or f"See details in CloudWatch Log Stream: {context.log_stream_name}",
+              "PhysicalResourceId": event.get("PhysicalResourceId", context.log_stream_name),
+              "StackId": event["StackId"],
+              "RequestId": event["RequestId"],
+              "LogicalResourceId": event["LogicalResourceId"],
+              "Data": {},
+            }
+            data = json.dumps(response_body).encode("utf-8")
+            req = urllib.request.Request(
+              response_url,
+              data=data,
+              headers={"content-type": "", "content-length": str(len(data))},
+              method="PUT",
+            )
+            urllib.request.urlopen(req)
 
           def handler(event, context):
-              if event["RequestType"] == "Delete":
-                  send_response(event, context, "SUCCESS")
-                  return
+            try:
+              if event.get("RequestType") == "Delete":
+                send_response(event, context, "SUCCESS")
+                return
 
-              try:
-                  source_url = event["ResourceProperties"]["SourceUrl"]
-                  dest_bucket = event["ResourceProperties"]["DestBucket"]
-                  with urllib.request.urlopen(source_url) as response:
-                      zip_bytes = io.BytesIO(response.read())
+              props = event.get("ResourceProperties", {})
+              bucket = props.get("BucketName")
+              url = props.get("SourceUrl")
+              if not bucket or not url:
+                raise ValueError("BucketName and SourceUrl are required")
 
-                  s3 = boto3.client("s3")
-                  with zipfile.ZipFile(zip_bytes) as archive:
-                      for name in archive.namelist():
-                          if name.endswith("/"):
-                              continue
-                          content = archive.read(name)
-                          content_type, _ = mimetypes.guess_type(name)
-                          if not content_type:
-                              content_type = "application/octet-stream"
-                          s3.put_object(
-                              Bucket=dest_bucket,
-                              Key=name,
-                              Body=content,
-                              ContentType=content_type,
-                          )
+              tmp_zip = "/tmp/npc.zip"
+              with urllib.request.urlopen(url) as response, open(tmp_zip, "wb") as f:
+                f.write(response.read())
 
-                  send_response(event, context, "SUCCESS")
-              except Exception as exc:
-                  send_response(event, context, "FAILED", str(exc))
+              with zipfile.ZipFile(tmp_zip, "r") as zip_ref:
+                for name in zip_ref.namelist():
+                  if name.endswith("/"):
+                    continue
+                  with zip_ref.open(name) as obj:
+                    s3.upload_fileobj(obj, bucket, name)
 
-  FrontendSeed:
-    Type: Custom::FrontendSeed
+              send_response(event, context, "SUCCESS")
+            except Exception as exc:
+              send_response(event, context, "FAILED", str(exc))
+
+  NpcAssetsLoader:
+    Type: Custom::NpcAssetsLoader
     Properties:
-      ServiceToken: !GetAtt FrontendSeedFunction.Arn
-      SourceUrl: "https://workshop-demo-artifacts.s3.us-east-1.amazonaws.com/frontend/frontend.zip"
-      DestBucket: !Ref FrontendBucket
+      ServiceToken: !GetAtt NpcAssetsLoaderFunction.Arn
+      BucketName: !Ref NpcAssetsBucket
+      SourceUrl: !Sub "https://${ArtifactsBucketName}.s3.${ArtifactsRegion}.amazonaws.com/archive/npc.zip"
 
   ApiGatewayInvokePermission:
     Type: AWS::Lambda::Permission
@@ -340,12 +262,6 @@ Outputs:
   ApiBaseUrl:
     Description: "API Gateway base URL"
     Value: !Sub "https://${ApiGW}.execute-api.${AWS::Region}.amazonaws.com/Prod"
-  FrontendBucketName:
-    Description: "S3 bucket name for the frontend"
-    Value: !Ref FrontendBucket
-  FrontendUrl:
-    Description: "Public website URL for the frontend"
-    Value: !GetAtt FrontendBucket.WebsiteURL
-  CloudFrontUrl:
-    Description: "CloudFront distribution URL"
-    Value: !Sub "https://${FrontendDistribution.DomainName}"
+  NpcAssetsBucketName:
+    Description: "S3 bucket for NPC assets"
+    Value: !Ref NpcAssetsBucket

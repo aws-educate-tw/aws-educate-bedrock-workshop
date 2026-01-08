@@ -147,6 +147,7 @@ Resources:
         AttributeName: ttl
         Enabled: true
 
+
   ApiGatewayInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
