@@ -1,23 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -lt 3 ]]; then
-  echo "Usage: $0 <source-dir> <s3-bucket> <s3-prefix> [region]" >&2
+if [[ $# -lt 2 ]]; then
+  echo "Usage: $0 <s3-bucket> <s3-prefix> [region]" >&2
   exit 1
 fi
 
-SOURCE_DIR="$1"
-BUCKET_NAME="$2"
-S3_PREFIX="$3"
-REGION="${4:-${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}}"
+BUCKET_NAME="$1"
+S3_PREFIX="$2"
+REGION="${3:-${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}}"
 
-if [[ ! -d "${SOURCE_DIR}" ]]; then
-  echo "Source directory not found: ${SOURCE_DIR}" >&2
-  exit 1
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 if ! command -v zip >/dev/null 2>&1; then
   echo "Missing 'zip' command. Install it before running this script." >&2
+  exit 1
+fi
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "Missing 'npm' command. Install it before running this script." >&2
+  exit 1
+fi
+
+pushd "${ROOT_DIR}" >/dev/null
+npm run build
+popd >/dev/null
+
+SOURCE_DIR="${ROOT_DIR}/dist"
+if [[ ! -d "${SOURCE_DIR}" ]]; then
+  echo "Build output not found: ${SOURCE_DIR}" >&2
   exit 1
 fi
 
