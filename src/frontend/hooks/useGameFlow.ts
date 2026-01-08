@@ -54,6 +54,7 @@ export function useGameFlow(sessionId: string | null) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [progress, setProgress] = useState<GameProgressInfo | null>(null);
   const [playerState, setPlayerState] = useState<PlayerSnapshot | null>(null);
+  const [currentSummary, setCurrentSummary] = useState<string | null>(null);
   const [pendingResult, setPendingResult] =
     useState<GenerateResultResponse | null>(null);
   const [shouldFinish, setShouldFinish] = useState(false);
@@ -68,7 +69,17 @@ export function useGameFlow(sessionId: string | null) {
       const response = await generateStory({ session_id: sessionId! });
       setEvent(response);
       setProgress(response.game_progress);
-      setShouldFinish(Boolean(response.should_generate_result));
+      const shouldGenerateResult = Boolean(response.should_generate_result);
+      setShouldFinish(shouldGenerateResult);
+
+      if (
+        shouldGenerateResult &&
+        (!response.options || response.options.length === 0)
+      ) {
+        const result = await generateResult({ session_id: sessionId! });
+        setPendingResult(result);
+        setEvent(null);
+      }
     } catch (err) {
       setError(toApiError(err));
     } finally {
@@ -104,9 +115,10 @@ export function useGameFlow(sessionId: string | null) {
       setError(null);
 
       try {
+        const { image: _omitImage, ...eventPayload } = event;
         const resolved = await resolveEvent({
           session_id: sessionId!,
-          event,
+          event: eventPayload,
           selected_option: optionId,
         });
 
@@ -120,6 +132,7 @@ export function useGameFlow(sessionId: string | null) {
         ]);
 
         setPlayerState(toPlayerSnapshot(resolved.updated_player_state));
+        setCurrentSummary(resolved.current_summary);
 
         if (shouldFinish) {
           const result = await generateResult({ session_id: sessionId! });
@@ -160,6 +173,7 @@ export function useGameFlow(sessionId: string | null) {
     history,
     progress,
     playerState,
+    currentSummary,
     pendingResult,
     shouldFinish,
     loadEvent,

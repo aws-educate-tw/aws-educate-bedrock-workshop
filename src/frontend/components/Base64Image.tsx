@@ -35,11 +35,12 @@ export const Base64Image: React.FC<Base64ImageProps> = ({
   const [error, setError] = useState(false);
 
   if (!base64 || error) {
+    const message = error ? "圖像無法載入" : "圖像載入中";
     return (
       <div className={fallbackClassName}>
         <div className="text-center">
           <ImageIcon size={64} className="text-slate-500 mx-auto mb-2" />
-          <p className="text-slate-400 text-sm">圖像無法載入</p>
+          <p className="text-slate-400 text-sm">{message}</p>
         </div>
       </div>
     );

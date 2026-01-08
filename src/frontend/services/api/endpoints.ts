@@ -50,6 +50,9 @@ export function getApiBaseUrl(): string {
 export async function generateBackground(
   req: GenerateBackgroundRequest
 ): Promise<GenerateBackgroundResponse> {
+  if ((import.meta.env.VITE_DEBUG_API as string | undefined) === "true") {
+    console.log("[API Request]", "/generate-background", req);
+  }
   return fetchWithRetry<GenerateBackgroundResponse>(
     `${API_BASE_URL}/generate-background`,
     {
@@ -73,6 +76,9 @@ export async function generateBackground(
 export async function generateStory(
   req: GenerateStoryRequest
 ): Promise<StoryResponse> {
+  if ((import.meta.env.VITE_DEBUG_API as string | undefined) === "true") {
+    console.log("[API Request]", "/generate-story", req);
+  }
   return fetchWithRetry<StoryResponse>(`${API_BASE_URL}/generate-story`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -89,6 +95,9 @@ export async function generateStory(
 export async function resolveEvent(
   req: ResolveEventRequest
 ): Promise<ResolveEventResponse> {
+  if ((import.meta.env.VITE_DEBUG_API as string | undefined) === "true") {
+    console.log("[API Request]", "/resolve-event", req);
+  }
   return fetchWithRetry<ResolveEventResponse>(`${API_BASE_URL}/resolve-event`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -105,6 +114,9 @@ export async function resolveEvent(
 export async function generateResult(
   req: GenerateResultRequest
 ): Promise<GenerateResultResponse> {
+  if ((import.meta.env.VITE_DEBUG_API as string | undefined) === "true") {
+    console.log("[API Request]", "/generate-result", req);
+  }
   return fetchWithRetry<GenerateResultResponse>(
     `${API_BASE_URL}/generate-result`,
     {
@@ -122,6 +134,9 @@ export async function generateResult(
  * 檢查 DynamoDB 連線
  */
 export async function checkDbHealth(): Promise<DbHealthResponse> {
+  if ((import.meta.env.VITE_DEBUG_API as string | undefined) === "true") {
+    console.log("[API Request]", "/db-health");
+  }
   return fetchWithRetry<DbHealthResponse>(`${API_BASE_URL}/db-health`, {
     method: "GET",
     timeout: 60000,
@@ -134,6 +149,9 @@ export async function checkDbHealth(): Promise<DbHealthResponse> {
  * 檢查 Lambda 服務狀態
  */
 export async function checkLambdaHealth(): Promise<LambdaHealthResponse> {
+  if ((import.meta.env.VITE_DEBUG_API as string | undefined) === "true") {
+    console.log("[API Request]", "/lambda-health");
+  }
   return fetchWithRetry<LambdaHealthResponse>(`${API_BASE_URL}/lambda-health`, {
     method: "GET",
     timeout: 60000,

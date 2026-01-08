@@ -1,6 +1,7 @@
 import { ApiError } from "./types";
 
 const DEFAULT_TIMEOUT_MS = 60000;
+const DEBUG_API = (import.meta.env.VITE_DEBUG_API as string | undefined) === "true";
 const MAX_RETRIES = 2;
 const RETRY_BACKOFF_MS = 1000;
 
@@ -70,6 +71,29 @@ export async function fetchWithRetry<T>(
         } else {
           throw lastError;
         }
+      }
+
+      // Log response body without consuming the main stream.
+      if (DEBUG_API) {
+        response
+          .clone()
+          .text()
+          .then((text) => {
+            const trimmed = text.trim();
+            if (!trimmed) {
+              console.log("[API Response]", url, "(empty body)");
+              return;
+            }
+            try {
+              const parsed = JSON.parse(trimmed);
+              console.log("[API Response]", url, parsed);
+            } catch {
+              console.log("[API Response]", url, trimmed);
+            }
+          })
+          .catch(() => {
+            console.log("[API Response]", url, "(failed to read body)");
+          });
       }
 
       // 判斷 HTTP 狀態碼

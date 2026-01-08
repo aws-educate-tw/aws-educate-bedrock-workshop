@@ -134,6 +134,7 @@ export const GamePage: React.FC = () => {
     history,
     progress,
     playerState,
+    currentSummary,
     pendingResult,
     shouldFinish,
     selectOption,
@@ -215,6 +216,7 @@ export const GamePage: React.FC = () => {
       // 錯誤已在 hook 中處理並回填
     }
   };
+
 
   const renderErrorMessage = (err: ApiError) => {
     switch (err.errorType) {
@@ -322,11 +324,11 @@ export const GamePage: React.FC = () => {
                   {backgroundSnapshot?.lifeGoal || "—"}
                 </div>
 
-                {backgroundSnapshot?.background && (
+                {(currentSummary || backgroundSnapshot?.background) && (
                   <div className="prophet-small-text leading-snug max-h-40 overflow-y-auto custom-scrollbar">
-                    <strong>背景：</strong>
+                    <strong>{currentSummary ? "現況：" : "背景："}</strong>
                     <div className="mt-1 whitespace-pre-line">
-                      {backgroundSnapshot.background}
+                      {currentSummary || backgroundSnapshot?.background}
                     </div>
                   </div>
                 )}
