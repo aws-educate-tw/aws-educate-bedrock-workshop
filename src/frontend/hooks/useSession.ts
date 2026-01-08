@@ -41,6 +41,11 @@ export function useSession() {
 
         // 保存 session_id
         SessionService.saveSessionId(response.session_id);
+        SessionService.saveBackground({
+          background: response.background,
+          lifeGoal: response.life_goal,
+          playerIdentity: response.player_identity || {},
+        });
 
         setState((prev) => ({
           ...prev,

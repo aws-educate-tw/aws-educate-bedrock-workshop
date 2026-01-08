@@ -9,6 +9,19 @@
 
 const SESSION_ID_KEY = "__game_session_id__";
 const SESSION_TIMESTAMP_KEY = "__game_session_timestamp__";
+const SESSION_BACKGROUND_KEY = "__game_background__";
+
+export type BackgroundSnapshot = {
+  background: string;
+  lifeGoal: string;
+  playerIdentity: {
+    age?: number;
+    gender?: string;
+    appearance?: string;
+    profession?: string;
+    initial_traits?: string[];
+  };
+};
 
 export const SessionService = {
   /**
@@ -41,8 +54,26 @@ export const SessionService = {
     try {
       localStorage.removeItem(SESSION_ID_KEY);
       localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+      localStorage.removeItem(SESSION_BACKGROUND_KEY);
     } catch (err) {
       console.warn("Failed to clear session:", err);
+    }
+  },
+
+  saveBackground(snapshot: BackgroundSnapshot): void {
+    try {
+      localStorage.setItem(SESSION_BACKGROUND_KEY, JSON.stringify(snapshot));
+    } catch (err) {
+      console.warn("Failed to save background to localStorage:", err);
+    }
+  },
+
+  getBackground(): BackgroundSnapshot | null {
+    try {
+      const stored = localStorage.getItem(SESSION_BACKGROUND_KEY);
+      return stored ? (JSON.parse(stored) as BackgroundSnapshot) : null;
+    } catch {
+      return null;
     }
   },
 
