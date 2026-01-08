@@ -118,7 +118,7 @@ export function useGameFlow(sessionId: string | null) {
         const { image: _omitImage, ...eventPayload } = event;
         const resolved = await resolveEvent({
           session_id: sessionId!,
-          event: eventPayload,
+          event: { ...eventPayload, image: null },
           selected_option: optionId,
         });
 
