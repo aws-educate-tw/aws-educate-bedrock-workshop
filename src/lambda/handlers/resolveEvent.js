@@ -4,6 +4,7 @@ const { resolveEventPrompt } = require("../prompts/resolveEvent");
 const { resolveEventSchema } = require("../schemas/resolveEvent");
 const { generateImage, setCharacterAppearance } = require("../services/imageGenerator");
 const { setKnowledgeBaseId } = require("../services/knowledgeBase");
+const { getMinimumAge } = require("../config/gamePhases");
 
 const resolveEvent = async (body) => {
     if (!body.session_id || !body.event || !body.selected_option) {
@@ -30,13 +31,16 @@ const resolveEvent = async (body) => {
         };
     }
 
-    const { knowledgeBaseId, currentSummary, lifeGoal, playerState, playerIdentity } = parseSessionState(sessionItem);
+    const { knowledgeBaseId, currentSummary, lifeGoal, playerState, playerIdentity, turn } = parseSessionState(sessionItem);
 
     // 設定此次請求使用的 Knowledge Base ID
     setKnowledgeBaseId(knowledgeBaseId);
 
     // 設定角色外觀資訊（供生圖使用）
     setCharacterAppearance(playerIdentity);
+
+    // 計算此回合角色的最低年齡
+    const minimumAge = getMinimumAge(turn);
 
     let resolvePayload;
     try {
@@ -47,6 +51,7 @@ const resolveEvent = async (body) => {
             state: JSON.stringify(playerState),
             event: JSON.stringify(body.event),
             selectedOption: body.selected_option,
+            minimumAge: minimumAge,
         });
     } catch (error) {
         return {

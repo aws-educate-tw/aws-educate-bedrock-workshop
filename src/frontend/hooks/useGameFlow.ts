@@ -86,6 +86,8 @@ export function useGameFlow(sessionId: string | null) {
   const [currentSummary] = useState<string | null>(
     () => backgroundData?.background ?? null
   );
+  // 最新的故事摘要（每次 resolveEvent 後更新）
+  const [latestSummary, setLatestSummary] = useState<string | null>(null);
   // 最新的事件結果（用於顯示在「目前狀況」）
   const [latestEventOutcome, setLatestEventOutcome] = useState<string | null>(null);
   // 是否正在顯示事件結果（選擇後 -> 按下一步前）
@@ -102,6 +104,18 @@ export function useGameFlow(sessionId: string | null) {
   const [lifeGoal] = useState<string | null>(
     () => backgroundData?.life_goal ?? null
   );
+  // 初始角色肖像圖（generateBackground 產生的，永久保存）
+  const [characterPortrait] = useState<string | null>(
+    () => backgroundData?.image ?? null
+  );
+  // 初始角色身份資訊
+  const [playerIdentity] = useState<{
+    name?: string;
+    gender?: string;
+    appearance?: string;
+    age?: number;
+    profession?: string;
+  } | null>(() => backgroundData?.player_identity ?? null);
 
   const hasSession = useMemo(() => Boolean(sessionId), [sessionId]);
 
@@ -172,6 +186,8 @@ export function useGameFlow(sessionId: string | null) {
 
         // 設定 event_outcome（用於事件結果畫面顯示）
         setLatestEventOutcome(resolved.event_outcome ?? null);
+        // 更新最新故事摘要
+        setLatestSummary(resolved.current_summary ?? null);
         // 更新圖片（如果 resolve-event 有回傳圖片）
         if (resolved.image) {
           setCurrentImage(resolved.image);
@@ -304,9 +320,13 @@ export function useGameFlow(sessionId: string | null) {
     // 新增：顯示結果模式相關
     showingOutcome,
     latestEventOutcome,
+    latestSummary,
     preloading,
     // 新增：最後一回合結果預載相關
     preloadingResult,
+    // 新增：初始角色資訊（永久保存）
+    characterPortrait,
+    playerIdentity,
     loadEvent,
     selectOption,
     resetError,

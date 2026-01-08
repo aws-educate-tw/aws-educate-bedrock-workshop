@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Base64Image } from "../components/Base64Image";
+import { CharacterCard } from "../components/CharacterCard";
 import { useGameFlow } from "../hooks/useGameFlow";
 import {
   ApiError,
@@ -139,6 +140,9 @@ export const GamePage: React.FC = () => {
     latestEventOutcome,
     preloading,
     preloadingResult,
+    characterPortrait,
+    playerIdentity,
+    latestSummary,
     selectOption,
     resetError,
     proceedToNextEvent,
@@ -250,6 +254,15 @@ export const GamePage: React.FC = () => {
         backgroundAttachment: "fixed",
       }}
     >
+      {/* 角色資訊卡 - 從左側邊緣滑出 */}
+      <CharacterCard
+        portrait={characterPortrait}
+        background={currentSummary}
+        lifeGoal={lifeGoal}
+        currentSummary={latestSummary}
+        playerIdentity={playerIdentity}
+      />
+
       <header className="text-center py-4 border-b-2 border-[var(--prophet-border)]">
         <h1 className="prophet-title text-2xl mb-2">
           {"THE DAILY PROPHET".split("").map((char, index) => (
@@ -269,18 +282,18 @@ export const GamePage: React.FC = () => {
         <div className="prophet-dateline">★ 人生模擬進行中 ★</div>
       </header>
 
-      <div className="p-6 flex-1 overflow-y-auto min-h-0">
-        {/* ✅ 三欄不等寬：12欄格 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+      <div className="p-6 flex-1 min-h-0 overflow-hidden">
+        {/* ✅ 三欄不等寬：12欄格，固定高度讓各欄可獨立滾動 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full max-h-[calc(100vh-180px)]">
           {/* ① 人物近影（中窄：跟圖片差不多高度） */}
-          <div className="lg:col-span-3 min-h-0">
-            <div className="prophet-article h-full overflow-hidden flex flex-col">
+          <div className="lg:col-span-3 min-h-0 overflow-hidden">
+            <div className="prophet-article h-full overflow-y-auto custom-scrollbar flex flex-col">
               <h3 className="prophet-headline text-lg mb-3 border-b border-[var(--prophet-border)] pb-2 flex-shrink-0">
                 人物近影
               </h3>
 
               <div
-                className="prophet-photo mx-auto"
+                className="prophet-photo mx-auto flex-shrink-0"
                 style={{ maxWidth: "240px" }}
               >
                 <Base64Image
@@ -290,7 +303,7 @@ export const GamePage: React.FC = () => {
                 />
               </div>
 
-              <div className="text-center mt-3">
+              <div className="text-center mt-3 flex-shrink-0">
                 <p className="prophet-text text-sm">
                   <span className="opacity-80">角色狀態：</span>
                   <span className="font-bold">
@@ -302,8 +315,8 @@ export const GamePage: React.FC = () => {
           </div>
 
           {/* ② 現況說明（窄） */}
-          <div className="lg:col-span-3 min-h-0">
-            <div className="prophet-article h-full overflow-hidden flex flex-col">
+          <div className="lg:col-span-3 min-h-0 overflow-hidden">
+            <div className="prophet-article h-full overflow-y-auto custom-scrollbar flex flex-col">
               <h3 className="prophet-headline text-lg mb-3 border-b border-[var(--prophet-border)] pb-2 flex-shrink-0">
                 現況說明
               </h3>
@@ -362,22 +375,13 @@ export const GamePage: React.FC = () => {
                   <strong>人生目標：</strong>
                   {lifeGoal ?? "尚未提供（請參考背景）"}
                 </div>
-
-                {currentSummary && (
-                  <div className="prophet-small-text leading-snug border-t border-[var(--prophet-border)] pt-2 mt-2">
-                    <strong>角色背景：</strong>
-                    <div className="mt-1 h-[60px] overflow-y-auto custom-scrollbar pr-1">
-                      <p className="opacity-90">{currentSummary}</p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
           {/* ③ 人生轉折點 / 事件結果（寬） */}
-          <div className="lg:col-span-6 min-h-0">
-            <div className="prophet-article h-full overflow-hidden flex flex-col">
+          <div className="lg:col-span-6 min-h-0 overflow-hidden">
+            <div className="prophet-article h-full overflow-y-auto custom-scrollbar flex flex-col">
               {showingOutcome ? (
                 /* ===== 顯示事件結果模式 ===== */
                 <>
@@ -447,7 +451,7 @@ export const GamePage: React.FC = () => {
                         <div className="text-center">
                           <span className="prophet-small-text">
                             {progress
-                              ? `回合 ${progress.turn}/${progress.total_turns}｜階段：${progress.phase} (${progress.phase_progress})`
+                              ? `回合 ${progress.turn} / ${progress.total_turns}`
                               : "等待遊戲進度..."}
                           </span>
                         </div>
@@ -554,7 +558,7 @@ export const GamePage: React.FC = () => {
                         <div className="text-center mb-2">
                           <span className="prophet-small-text">
                             {progress
-                              ? `回合 ${progress.turn}/${progress.total_turns}｜階段：${progress.phase} (${progress.phase_progress})`
+                              ? `回合 ${progress.turn} / ${progress.total_turns}`
                               : "等待遊戲進度..."}
                           </span>
                         </div>

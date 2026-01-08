@@ -6,7 +6,8 @@ const client = new BedrockRuntimeClient({
 
 const MODEL_ID = "amazon.nova-canvas-v1:0";
 
-const STYLE_PREFIX = `Stylized 2D digital art illustration in "Harry Potter: Magic Awakened" style - muted moody colors, dramatic rim lighting, gothic whimsical "Dark Academia" aesthetic.`;
+// 精確的風格描述，適用於較基礎的生圖模型
+const STYLE_PREFIX = `Digital illustration, 2D art style, semi-realistic cartoon. Color palette: warm sepia tones, dark brown, golden yellow, deep red accents. Lighting: soft warm glow, candlelight atmosphere. Art direction: vintage newspaper illustration style, hand-drawn linework, watercolor texture. Setting: 1920s fantasy world, magical Victorian era.`;
 
 // 儲存當前角色外觀資訊（用於生成一致的角色圖像）
 let currentCharacterAppearance = null;
@@ -114,9 +115,11 @@ const generateCharacterPortrait = async () => {
 
     const prompt = `${STYLE_PREFIX}
 
-Character portrait of ${characterDescription}.
-
-Framing: Upper body portrait or bust shot. Focus entirely on the character with a simple, blurred background. Show the character's face and upper body clearly. Neutral pose, looking slightly towards the camera.`;
+Subject: Portrait of ${characterDescription}.
+Pose: Upper body shot, shoulders and head visible, facing slightly left, neutral expression.
+Background: Simple gradient, blurred, dark brown to golden.
+Camera: Medium close-up, eye level, centered composition.
+Details: Clear facial features, detailed clothing texture, soft shadows on face.`;
 
     return await invokeImageGeneration(prompt);
 };
