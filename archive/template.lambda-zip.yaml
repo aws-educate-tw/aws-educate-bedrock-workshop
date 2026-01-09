@@ -99,6 +99,11 @@ Resources:
               Action:
                 - bedrock:Retrieve
               Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*"
+            - Effect: Allow
+              Action:
+                - aws-marketplace:ViewSubscriptions
+                - aws-marketplace:Subscribe
+              Resource: "*"
       Events:
         GenerateBackground:
           Type: Api
@@ -456,6 +461,9 @@ Outputs:
   NpcAssetsBucketName:
     Description: "S3 bucket for NPC assets"
     Value: !Ref NpcAssetsBucket
+  PosterBucketName:
+    Description: "S3 bucket for poster images"
+    Value: !Ref PosterBucket
   FrontendBucketName:
     Description: "S3 bucket name for the frontend"
     Value: !Ref FrontendBucket
