@@ -315,6 +315,30 @@
 
 ---
 
+## 7️⃣ POST /upload-poster
+
+### 功能說明
+
+將前端產生的海報圖片（Base64）上傳到 S3，回傳公開圖片 URL。
+
+### Request Body
+
+```json
+{
+  "image_base64": "data:image/png;base64,...."
+}
+```
+
+### Response（範例）
+
+```json
+{
+  "url": "https://<bucket>.s3.<region>.amazonaws.com/posters/<file>.png"
+}
+```
+
+---
+
 # 四、資料儲存設計（DynamoDB Schema）
 
 本專案使用 **Amazon DynamoDB** 作為遊戲狀態與 session 資料的儲存層。
