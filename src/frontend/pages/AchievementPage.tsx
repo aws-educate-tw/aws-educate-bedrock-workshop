@@ -91,6 +91,17 @@ export const AchievementPage: React.FC = () => {
 
   const buildPosterCanvas = async () => {
     if (!posterRef.current) return null;
+    // Wait for the radar SVG to finish layout before snapshotting.
+    for (let i = 0; i < 10; i += 1) {
+      const svg = posterRef.current.querySelector("svg");
+      if (svg) {
+        const { width, height } = svg.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          break;
+        }
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     return html2canvas(posterRef.current, {
       backgroundColor: "#f8f6f0",
       scale: 2,
