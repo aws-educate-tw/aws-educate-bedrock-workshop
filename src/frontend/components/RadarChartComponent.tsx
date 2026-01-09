@@ -34,14 +34,14 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data, 
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
           <PolarGrid 
-            stroke="var(--newspaper-dark)" 
+            stroke="#1a1a1a" 
             strokeWidth={1}
             strokeOpacity={0.4}
           />
           <PolarAngleAxis 
             dataKey="subject" 
             tick={{ 
-              fill: 'var(--newspaper-dark)', 
+              fill: '#1a1a1a', 
               fontSize: 12,
               fontWeight: 600,
               fontFamily: 'Crimson Text, serif'
@@ -51,7 +51,7 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data, 
             angle={90}
             domain={[0, 100]}
             tick={hideScale ? false : { 
-              fill: 'var(--newspaper-accent)', 
+              fill: '#8b6914', 
               fontSize: 10,
               fontFamily: 'Crimson Text, serif'
             }}
@@ -61,14 +61,14 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data, 
           <Radar
             name="能力值"
             dataKey="value"
-            stroke="var(--newspaper-dark)"
-            fill="var(--newspaper-accent)"
+            stroke="#1a1a1a"
+            fill="#8b6914"
             fillOpacity={0.2}
             strokeWidth={2}
             dot={{ 
-              fill: 'var(--newspaper-dark)', 
+              fill: '#1a1a1a', 
               strokeWidth: 2, 
-              stroke: 'var(--newspaper-light)',
+              stroke: '#f8f6f0',
               r: 4 
             }}
           />
@@ -76,7 +76,7 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data, 
           <Radar
             name="輔助線"
             dataKey="value"
-            stroke="var(--newspaper-accent)"
+            stroke="#8b6914"
             fill="transparent"
             strokeWidth={1}
             strokeOpacity={0.6}

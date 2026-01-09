@@ -79,7 +79,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({
         {/* 底部品牌 */}
         <div className="text-center mt-4 pt-2 border-t border-[var(--prophet-border)]">
           <div className="prophet-small-text opacity-60">
-            AI 人生模擬器 • 由 Claude AI 生成
+            2026 Winter AWS Educate 證照陪跑計畫
           </div>
         </div>
       </div>
