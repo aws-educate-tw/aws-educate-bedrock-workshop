@@ -179,7 +179,7 @@ export const HomePage: React.FC = () => {
       </header>
 
       {/* 主要版面 - 三欄報紙布局 */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 ">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 左欄：魔法照片 */}
           <div className="prophet-article">
