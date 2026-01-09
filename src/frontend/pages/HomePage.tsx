@@ -17,13 +17,15 @@ export const HomePage: React.FC = () => {
   const { sessionId, loading, error, initializeSession } = useSession();
 
   const [titleAnimated, setTitleAnimated] = useState(false);
-  const [apiGatewayUrl, setApiGatewayUrl] = useState(
-    (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
-      `${window.location.origin}/api`
-  );
-  const [knowledgeBaseId, setKnowledgeBaseId] = useState(
-    (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) || ""
-  );
+  const [apiGatewayUrl, setApiGatewayUrl] = useState(() => {
+    // 優先從 sessionStorage 讀取，否則用環境變數或預設值
+    const stored = sessionStorage.getItem("__home_api_url__");
+    return stored ?? (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? `${window.location.origin}/api`;
+  });
+  const [knowledgeBaseId, setKnowledgeBaseId] = useState(() => {
+    const stored = sessionStorage.getItem("__home_kb_id__");
+    return stored ?? (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ?? "";
+  });
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [shouldNavigate, setShouldNavigate] = useState(false);
   const enableEscNav =
@@ -218,7 +220,10 @@ export const HomePage: React.FC = () => {
                   className="w-full prophet-input px-3 py-2 text-sm"
                   placeholder="例：https://api.example.com/api 或 http://localhost:3000"
                   value={apiGatewayUrl}
-                  onChange={(e) => setApiGatewayUrl(e.target.value)}
+                  onChange={(e) => {
+                    setApiGatewayUrl(e.target.value);
+                    sessionStorage.setItem("__home_api_url__", e.target.value);
+                  }}
                   disabled={loading}
                 />
               </div>
@@ -232,7 +237,10 @@ export const HomePage: React.FC = () => {
                   className="w-full prophet-input px-3 py-2 text-sm"
                   placeholder="留空將使用預設值"
                   value={knowledgeBaseId}
-                  onChange={(e) => setKnowledgeBaseId(e.target.value)}
+                  onChange={(e) => {
+                    setKnowledgeBaseId(e.target.value);
+                    sessionStorage.setItem("__home_kb_id__", e.target.value);
+                  }}
                   disabled={loading}
                 />
               </div>

@@ -9,6 +9,7 @@
 
 const SESSION_ID_KEY = "__game_session_id__";
 const SESSION_TIMESTAMP_KEY = "__game_session_timestamp__";
+const SESSION_BACKGROUND_KEY = "__game_session_background__";
 
 export const SessionService = {
   /**
@@ -41,8 +42,54 @@ export const SessionService = {
     try {
       localStorage.removeItem(SESSION_ID_KEY);
       localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+      localStorage.removeItem(SESSION_BACKGROUND_KEY);
     } catch (err) {
       console.warn("Failed to clear session:", err);
+    }
+  },
+
+  /**
+   * 儲存 generate-background 回應資料
+   */
+  saveBackgroundData(data: {
+    background: string;
+    player_identity: {
+      age: number;
+      gender: string;
+      appearance: string;
+      profession: string;
+      initial_traits: string[];
+    };
+    life_goal: string;
+    image: string | null;
+  }): void {
+    try {
+      localStorage.setItem(SESSION_BACKGROUND_KEY, JSON.stringify(data));
+    } catch (err) {
+      console.warn("Failed to save background data:", err);
+    }
+  },
+
+  /**
+   * 讀取 generate-background 回應資料
+   */
+  getBackgroundData(): {
+    background: string;
+    player_identity: {
+      age: number;
+      gender: string;
+      appearance: string;
+      profession: string;
+      initial_traits: string[];
+    };
+    life_goal: string;
+    image: string | null;
+  } | null {
+    try {
+      const data = localStorage.getItem(SESSION_BACKGROUND_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
     }
   },
 

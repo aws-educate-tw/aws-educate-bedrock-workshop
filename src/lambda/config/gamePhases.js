@@ -76,6 +76,19 @@ const getPhaseInfo = (turn) => {
 };
 
 /**
+ * 根據回合數計算角色的最低年齡
+ * @param {number} turn - 目前回合（從 0 開始）
+ * @returns {number} 最低年齡
+ */
+const getMinimumAge = (turn) => {
+    // 每回合對應的最低年齡（共 8 回合：0-7）
+    // 回合 0: 13歲, 回合 1: 15歲, 回合 2: 18歲, 回合 3: 20歲
+    // 回合 4: 22歲, 回合 5: 28歲, 回合 6: 40歲, 回合 7: 60歲
+    const minimumAges = [13, 15, 18, 20, 22, 28, 40, 60];
+    return minimumAges[Math.min(turn, minimumAges.length - 1)];
+};
+
+/**
  * 生成給 LLM 的階段提示
  * @param {number} turn - 目前回合
  * @returns {string} 階段提示文字
@@ -83,13 +96,15 @@ const getPhaseInfo = (turn) => {
 const getPhasePrompt = (turn) => {
     const info = getPhaseInfo(turn);
     const { currentPhase, turnsLeftInPhase, isLastTurnOfPhase, isLastPhase, totalTurnsLeft, isLastTurn } = info;
+    const minimumAge = getMinimumAge(turn);
 
     let prompt = `【人生階段】${currentPhase.name}（${currentPhase.ageRange}）\n`;
     prompt += `【階段主題】${currentPhase.themes.join("、")}\n`;
-    prompt += `【進度】${info.progressText}，${info.phaseProgressText}\n`;
+    prompt += `【進度】${info.progressText}\n`;
+    prompt += `【年齡要求】角色目前至少應為 ${minimumAge} 歲，請確保 updated_player_state 中的 age 不低於此數值，且應隨時間推進適度增加。\n`;
 
     if (isLastTurn) {
-        prompt += `\n⚠️ 這是遊戲的最後一回合！請生成一個具有總結性的重大事件，為這段人生畫下句點。`;
+        prompt += `\n⚠️ 這是遊戲的最後一回合！請生成一個具有總結性的重大事件，為這段人生畫下句點。角色年齡應至少為 ${minimumAge} 歲。`;
     } else if (isLastTurnOfPhase) {
         if (isLastPhase) {
             prompt += `\n⚠️ 這是畢業階段的最後一回合，下一回合將進入遊戲結局。請生成一個為人生做總結的重要事件。`;
@@ -115,4 +130,5 @@ module.exports = {
     TOTAL_TURNS,
     getPhaseInfo,
     getPhasePrompt,
+    getMinimumAge,
 };

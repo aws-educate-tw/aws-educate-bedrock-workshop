@@ -3,7 +3,7 @@ const { createSession } = require("../services/session");
 const { backgroundPrompt } = require("../prompts/background");
 const { backgroundSchema } = require("../schemas/background");
 const { tableName } = require("../utils/dynamodb");
-const { setCharacterAppearance } = require("../services/imageGenerator");
+const { setCharacterAppearance, generateCharacterPortrait } = require("../services/imageGenerator");
 
 const generateBackground = async (body) => {
     if (!body.knowledge_base_id) {
@@ -47,11 +47,15 @@ const generateBackground = async (body) => {
         }
     }
 
-    // 設定角色外觀資訊（供後續生圖使用）
+    // 設定角色外觀資訊（供後續生圖使用，包含年齡以確保圖片準確）
     setCharacterAppearance({
         gender: playerIdentity.gender || "",
         appearance: playerIdentity.appearance || "",
+        age: playerIdentity.age || null,
     });
+
+    // 生成角色肖像圖（只有人物）
+    const image = await generateCharacterPortrait();
 
     return {
         statusCode: 200,
@@ -60,7 +64,7 @@ const generateBackground = async (body) => {
             background,
             player_identity: playerIdentity,
             life_goal: lifeGoal,
-            image: null,
+            image: image || null,
         }),
     };
 };

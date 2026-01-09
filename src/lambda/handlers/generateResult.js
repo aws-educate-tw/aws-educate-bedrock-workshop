@@ -90,8 +90,8 @@ const generateResult = async (body) => {
         };
     }
 
-    // 生成結局圖片
-    const image = await generateImage(`${finalResult.ending_title}. ${finalResult.summary}. A ${finalResult.ending_type} ending scene.`);
+    // 生成結局圖片（使用 LLM 產生的英文 image_prompt）
+    const image = await generateImage(resultPayload.image_prompt || `${finalResult.ending_title}. ${finalResult.summary}. A ${finalResult.ending_type} ending scene.`);
 
     return {
         statusCode: 200,

@@ -83,8 +83,8 @@ const generateStory = async (body) => {
         };
     }
 
-    // 生成事件圖片
-    const image = await generateImage(storyPayload.event_description);
+    // 生成事件圖片（使用 LLM 產生的英文 image_prompt）
+    const image = await generateImage(storyPayload.image_prompt || storyPayload.event_description);
 
     return {
         statusCode: 200,
@@ -93,6 +93,8 @@ const generateStory = async (body) => {
             event_description: storyPayload.event_description,
             options: storyPayload.options,
             image: image || null,
+            // 當這是最後一回合時，告訴前端選擇後要生成結局
+            should_generate_result: phaseInfo.isLastTurn,
             // 回傳遊戲進度資訊
             game_progress: {
                 turn: turn + 1,

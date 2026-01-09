@@ -22,6 +22,7 @@ const resolveEventSchema = z.object({
     updated_player_state: playerStateSchema.describe("更新後的玩家狀態"),
     stat_changes: z.array(statChangeSchema).describe("數值變動列表及原因說明"),
     current_summary: z.string().describe("累積式故事摘要"),
+    image_prompt: z.string().describe("英文圖片生成提示詞，描述角色正在進行的動作與場景"),
 });
 
 module.exports = { resolveEventSchema, playerStateSchema };

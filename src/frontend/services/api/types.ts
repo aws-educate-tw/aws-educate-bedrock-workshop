@@ -10,7 +10,7 @@ export interface GenerateStoryRequest {
 
 export interface ResolveEventRequest {
   session_id: string;
-  event: StoryResponse;
+  event: { event_id: string; event_description: string };
   selected_option: string;
 }
 

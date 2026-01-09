@@ -16,6 +16,7 @@ const resolveEventPrompt = ChatPromptTemplate.fromMessages([
 重要指示：
 - 根據玩家的選擇，合理調整相關數值（通常變動 -15 到 +15 之間）
 - 必須為每個變動的數值提供具體的原因說明
+- 【年齡要求】角色年齡必須隨劇情推進，每回合應增加 1-3 歲，且不可低於系統指定的最低年齡
 
 關於 current_summary 的撰寫原則：
 - 這是一份「精煉的故事摘要」，不是事件流水帳
@@ -35,11 +36,14 @@ const resolveEventPrompt = ChatPromptTemplate.fromMessages([
 本次事件內容：{event}
 玩家選擇：{selectedOption}
 
+【年齡限制】此回合角色年齡至少應為 {minimumAge} 歲，請確保 updated_player_state 中的 age 不低於此數值。
+
 請輸出事件結果，欄位必須包含：
 - event_outcome（String，描述本次事件的結果）
-- updated_player_state（Object，更新後的玩家狀態，含 age, career, wisdom, wealth, relationships, career_development, wellbeing, traits）
+- updated_player_state（Object，更新後的玩家狀態，含 age, career, wisdom, wealth, relationships, career_development, wellbeing, traits。注意：age 必須 >= {minimumAge}）
 - stat_changes（Array，數值變動列表，每項含 stat: 數值名稱, change: 變動量, reason: 變動原因說明）
-- current_summary（String，精煉的故事摘要，融入本次事件的重要影響，保持 200-400 字的精簡長度）`,
+- current_summary（String，精煉的故事摘要，融入本次事件的重要影響，保持 200-400 字的精簡長度）
+- image_prompt（String，英文圖片生成提示詞，20-40字，描述角色正在進行的具體動作與場景氛圍，例如："A young wizard holding a glowing wand in a mysterious ancient library, surrounded by floating books"）`,
     ],
 ]);
 
