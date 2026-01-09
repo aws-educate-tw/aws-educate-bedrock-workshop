@@ -483,11 +483,11 @@ export const GamePage: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                  <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2">
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="space-y-3"
+                      className="space-y-3 mr-2"
                     >
                       <div className="prophet-divider mb-3"></div>
                       <h3 className="prophet-subtitle text-base mb-2">

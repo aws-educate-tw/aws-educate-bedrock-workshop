@@ -278,13 +278,13 @@ export const AchievementPage: React.FC = () => {
                 解鎖成就
               </h2>
 
-              <div className="flex-1 min-h-0 overflow-y-auto prophet-scroll">
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2">
                 {displayState.achievements.length > 0 ? (
                   <div className="space-y-4">
                     {displayState.achievements.map((achievement, index) => (
                       <div
                         key={index}
-                        className="border border-[var(--prophet-border)] p-3 hover:border-[var(--prophet-dark)] transition-all"
+                        className="border border-[var(--prophet-border)] p-3 hover:border-[var(--prophet-dark)] transition-all mr-2"
                       >
                         <div className="flex gap-3 items-start">
                           {achievement.iconUrl ? (
@@ -333,8 +333,8 @@ export const AchievementPage: React.FC = () => {
                 關鍵抉擇
               </h2>
 
-              <div className="flex-1 min-h-0 overflow-y-auto prophet-scroll">
-                <div className="space-y-4 relative">
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2">
+                <div className="space-y-4 relative mr-2">
                   <div className="absolute left-3 top-0 bottom-0 w-px bg-[var(--prophet-border)]"></div>
 
                   {displayState.keyChoices.map((choice, index) => (
