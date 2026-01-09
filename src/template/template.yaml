@@ -137,6 +137,120 @@ Resources:
             Method: get
             RestApiId: !Ref ApiGW
 
+  PosterBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  PosterBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref PosterBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowPublicRead
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "${PosterBucket.Arn}/*"
+
+  PosterUploadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: PosterBucketWrite
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub "${PosterBucket.Arn}/*"
+
+  PosterUploadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt PosterUploadRole.Arn
+      Runtime: python3.11
+      Handler: index.handler
+      Timeout: 300
+      MemorySize: 256
+      Environment:
+        Variables:
+          POSTER_BUCKET: !Ref PosterBucket
+      InlineCode: |
+        import base64
+        import json
+        import os
+        import time
+        import uuid
+        import boto3
+
+        s3 = boto3.client("s3")
+
+        def handler(event, context):
+            try:
+                headers = {
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Headers": "Content-Type",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST",
+                }
+                body = event.get("body") or ""
+                if event.get("isBase64Encoded"):
+                    body = base64.b64decode(body).decode("utf-8")
+                payload = json.loads(body) if body else {}
+                image_data = payload.get("image_base64")
+                if not image_data:
+                    return {
+                        "statusCode": 400,
+                        "headers": headers,
+                        "body": json.dumps({"message": "image_base64 is required"}),
+                    }
+
+                if image_data.startswith("data:"):
+                    image_data = image_data.split(",", 1)[-1]
+
+                binary = base64.b64decode(image_data)
+                key = f"posters/{int(time.time())}-{uuid.uuid4().hex}.png"
+                bucket = os.environ["POSTER_BUCKET"]
+
+                s3.put_object(
+                    Bucket=bucket,
+                    Key=key,
+                    Body=binary,
+                    ContentType="image/png"
+                )
+
+                url = f"https://{bucket}.s3.{os.environ.get('AWS_REGION','us-east-1')}.amazonaws.com/{key}"
+                return {"statusCode": 200, "headers": headers, "body": json.dumps({"url": url})}
+            except Exception as exc:
+                return {
+                    "statusCode": 500,
+                    "headers": headers,
+                    "body": json.dumps({"message": "Upload failed", "error": str(exc)}),
+                }
+      Events:
+        UploadPoster:
+          Type: Api
+          Properties:
+            Path: /upload-poster
+            Method: post
+            RestApiId: !Ref ApiGW
+
   GameSessionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -165,3 +279,6 @@ Outputs:
   ApiBaseUrl:
     Description: "API Gateway base URL"
     Value: !Sub "https://${ApiGW}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  PosterBucketName:
+    Description: "S3 bucket for poster images"
+    Value: !Ref PosterBucket
