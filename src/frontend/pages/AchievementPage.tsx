@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SharePoster } from "../components/SharePoster";
 import { useToast } from "../components/Toast";
+import { getApiBaseUrl } from "../services/api/endpoints";
 import { useAppStore } from "../store";
 
 export const AchievementPage: React.FC = () => {
@@ -23,6 +24,8 @@ export const AchievementPage: React.FC = () => {
   const { summaryState, reset } = useAppStore();
   const posterRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [posterShareUrl, setPosterShareUrl] = useState<string | null>(null);
   const { showToast, ToastComponent } = useToast();
 
   // 若啟用 ESC 測試模式，允許無 summaryState 進入 AchievementPage
@@ -87,9 +90,60 @@ export const AchievementPage: React.FC = () => {
 
   if (!displayState) return null;
 
+  const buildPosterCanvas = async () => {
+    if (!posterRef.current) return null;
+    return html2canvas(posterRef.current, {
+      backgroundColor: "#f8f6f0",
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+    });
+  };
+
+  const uploadPoster = async () => {
+    if (uploadingPoster || posterShareUrl) return;
+    setUploadingPoster(true);
+    try {
+      const canvas = await buildPosterCanvas();
+      if (!canvas) {
+        throw new Error("海報尚未完成");
+      }
+      const dataUrl = canvas.toDataURL("image/png");
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/upload-poster`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_base64: dataUrl }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Upload failed: ${response.status}`);
+      }
+      const payload = (await response.json()) as { url?: string };
+      if (!payload.url) {
+        throw new Error("Missing upload URL");
+      }
+      setPosterShareUrl(payload.url);
+      showToast("海報已上傳完成，可直接分享", "success");
+    } catch (error) {
+      console.error("Failed to upload poster:", error);
+      showToast("上傳海報失敗，請稍後重試", "error");
+    } finally {
+      setUploadingPoster(false);
+    }
+  };
+
+  useEffect(() => {
+    void uploadPoster();
+  }, []);
+
   // 分享功能
   const handleFacebookShare = () => {
-    const url = encodeURIComponent(window.location.href);
+    if (!posterShareUrl) {
+      showToast("海報尚未上傳完成", "error");
+      return;
+    }
+    const url = encodeURIComponent(posterShareUrl);
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${url}`,
       "_blank"
@@ -97,7 +151,11 @@ export const AchievementPage: React.FC = () => {
   };
 
   const handleTwitterShare = () => {
-    const url = encodeURIComponent(window.location.href);
+    if (!posterShareUrl) {
+      showToast("海報尚未上傳完成", "error");
+      return;
+    }
+    const url = encodeURIComponent(posterShareUrl);
     const text = encodeURIComponent(
       `我的 AI 人生模擬結果：${displayState.lifeScore}/100 分！`
     );
@@ -108,7 +166,11 @@ export const AchievementPage: React.FC = () => {
   };
 
   const handleInstagramShare = () => {
-    navigator.clipboard.writeText(window.location.href);
+    if (!posterShareUrl) {
+      showToast("海報尚未上傳完成", "error");
+      return;
+    }
+    navigator.clipboard.writeText(posterShareUrl);
     showToast("連結已複製，可貼到 Instagram！");
     setTimeout(() => {
       window.open("https://www.instagram.com/", "_blank");
@@ -116,8 +178,12 @@ export const AchievementPage: React.FC = () => {
   };
 
   const handleCopyLink = async () => {
+    if (!posterShareUrl) {
+      showToast("海報尚未上傳完成", "error");
+      return;
+    }
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(posterShareUrl);
       showToast("連結已複製到剪貼板！");
     } catch (err) {
       showToast("複製失敗，請手動複製", "error");
@@ -129,12 +195,10 @@ export const AchievementPage: React.FC = () => {
 
     setExporting(true);
     try {
-      const canvas = await html2canvas(posterRef.current, {
-        backgroundColor: "#f8f6f0",
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-      });
+      const canvas = await buildPosterCanvas();
+      if (!canvas) {
+        throw new Error("海報尚未完成");
+      }
 
       const dataURL = canvas.toDataURL("image/jpeg", 0.9);
       const link = document.createElement("a");

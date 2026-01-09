@@ -72,7 +72,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({
 
       {/* 下半部：雷達圖 */}
       <div className="px-4 pb-4 -mt-2">
-        <div className="w-full h-[250px]">
+        <div className="w-full h-[270px]">
           <RadarChartComponent data={radar} hideScale={true} />
         </div>
 
