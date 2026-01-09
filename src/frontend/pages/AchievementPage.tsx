@@ -173,8 +173,7 @@ export const AchievementPage: React.FC = () => {
       <header className="text-center py-4 border-b-2 border-[var(--prophet-border)] relative">
         <button
           onClick={() => navigate("/summary")}
-          className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 prophet-button text-sm"
-          style={{ transform: "translateY(-50%)" }}
+          className="absolute left-4 top-3 flex items-center gap-2 px-4 py-2 prophet-button text-sm"
         >
           <ArrowLeft size={14} />
           返回總結
@@ -199,24 +198,23 @@ export const AchievementPage: React.FC = () => {
 
         <button
           onClick={handleRestart}
-          className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 prophet-button text-sm"
-          style={{ transform: "translateY(-50%)" }}
+          className="absolute right-4 top-3 flex items-center gap-2 px-4 py-2 prophet-button text-sm"
         >
           <RefreshCcw size={14} />
           重新開始
         </button>
       </header>
 
-      <div className="p-6">
-        <div className="grid grid-cols-7 gap-6 h-[calc(95vh-200px)]">
-          <div className="col-span-2">
-            <div className="prophet-article h-full">
+      <div className="p-6 flex-1 min-h-0">
+        <div className="grid grid-cols-7 gap-6 h-full min-h-0">
+          <div className="col-span-2 min-h-0">
+            <div className="prophet-article h-full min-h-0 flex flex-col">
               <h2 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2 flex items-center gap-2">
                 <Trophy size={16} className="text-[var(--prophet-accent)]" />
                 解鎖成就
               </h2>
 
-              <div className="h-full overflow-y-auto prophet-scroll">
+              <div className="flex-1 min-h-0 overflow-y-auto prophet-scroll">
                 {displayState.achievements.length > 0 ? (
                   <div className="space-y-4">
                     {displayState.achievements.map((achievement, index) => (
@@ -264,14 +262,14 @@ export const AchievementPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="col-span-2">
-            <div className="prophet-article h-full">
+          <div className="col-span-2 min-h-0">
+            <div className="prophet-article h-full min-h-0 flex flex-col">
               <h2 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2 flex items-center gap-2">
                 <Clock size={16} className="text-[var(--prophet-accent)]" />
                 關鍵抉擇
               </h2>
 
-              <div className="h-full overflow-y-auto prophet-scroll">
+              <div className="flex-1 min-h-0 overflow-y-auto prophet-scroll">
                 <div className="space-y-4 relative">
                   <div className="absolute left-3 top-0 bottom-0 w-px bg-[var(--prophet-border)]"></div>
 

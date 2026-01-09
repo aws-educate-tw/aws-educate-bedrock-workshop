@@ -23,7 +23,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({
 }) => {
   return (
     <div
-      className="w-[375px] h-[667px] border-4 border-[var(--prophet-border)] relative overflow-hidden mx-auto"
+      className="w-[375px] h-[700px] border-4 border-[var(--prophet-border)] relative overflow-hidden mx-auto"
       style={{
         backgroundImage:
           "url(https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/background_cznh7q.png)",
