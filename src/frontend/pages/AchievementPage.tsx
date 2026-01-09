@@ -91,17 +91,25 @@ export const AchievementPage: React.FC = () => {
 
   const buildPosterCanvas = async () => {
     if (!posterRef.current) return null;
-    // Wait for the radar SVG to finish layout before snapshotting.
-    for (let i = 0; i < 10; i += 1) {
+    
+    // 更嚴格的 SVG 渲染等待機制
+    for (let i = 0; i < 30; i += 1) {
       const svg = posterRef.current.querySelector("svg");
       if (svg) {
         const { width, height } = svg.getBoundingClientRect();
-        if (width > 0 && height > 0) {
+        // 檢查 SVG 尺寸和內部繪圖元素
+        const paths = svg.querySelectorAll("path");
+        const texts = svg.querySelectorAll("text");
+        
+        if (width > 0 && height > 0 && paths.length > 0 && texts.length > 0) {
+          // 額外等待確保渲染完成
+          await new Promise((resolve) => setTimeout(resolve, 200));
           break;
         }
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
+    
     return html2canvas(posterRef.current, {
       backgroundColor: "#f8f6f0",
       scale: 2,
@@ -144,7 +152,12 @@ export const AchievementPage: React.FC = () => {
   };
 
   useEffect(() => {
-    void uploadPoster();
+    // 延遲上傳，等待組件完全渲染
+    const timer = setTimeout(() => {
+      void uploadPoster();
+    }, 2000); // 等待 2 秒
+    
+    return () => clearTimeout(timer);
   }, []);
 
   // 分享功能
