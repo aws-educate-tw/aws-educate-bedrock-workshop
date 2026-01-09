@@ -10,7 +10,6 @@ import {
   RefreshCcw,
   Share2,
   Trophy,
-  Twitter,
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -157,7 +156,7 @@ export const AchievementPage: React.FC = () => {
     }
     const url = encodeURIComponent(posterShareUrl);
     const text = encodeURIComponent(
-      `我的 AI 人生模擬結果：${displayState.lifeScore}/100 分！`
+      `📰 預言家日報獨家！我的 AI 人生模擬獲得 ${displayState.lifeScore}/100 分！AWS Bedrock 比水晶球還準？快來看看吧！ #AWSEducate #BedrockWorkshop`
     );
     window.open(
       `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
@@ -278,13 +277,13 @@ export const AchievementPage: React.FC = () => {
                 解鎖成就
               </h2>
 
-              <div className="flex-1 min-h-0 overflow-y-auto prophet-scroll">
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2">
                 {displayState.achievements.length > 0 ? (
                   <div className="space-y-4">
                     {displayState.achievements.map((achievement, index) => (
                       <div
                         key={index}
-                        className="border border-[var(--prophet-border)] p-3 hover:border-[var(--prophet-dark)] transition-all"
+                        className="border border-[var(--prophet-border)] p-3 hover:border-[var(--prophet-dark)] transition-all mr-2"
                       >
                         <div className="flex gap-3 items-start">
                           {achievement.iconUrl ? (
@@ -333,8 +332,8 @@ export const AchievementPage: React.FC = () => {
                 關鍵抉擇
               </h2>
 
-              <div className="flex-1 min-h-0 overflow-y-auto prophet-scroll">
-                <div className="space-y-4 relative">
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2">
+                <div className="space-y-4 relative mr-2">
                   <div className="absolute left-3 top-0 bottom-0 w-px bg-[var(--prophet-border)]"></div>
 
                   {displayState.keyChoices.map((choice, index) => (
@@ -382,7 +381,14 @@ export const AchievementPage: React.FC = () => {
                       className="p-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-all"
                       title="X"
                     >
-                      <Twitter size={14} />
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
                     </button>
                     <button
                       onClick={handleInstagramShare}
