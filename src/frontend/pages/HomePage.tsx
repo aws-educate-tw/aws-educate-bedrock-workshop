@@ -3,10 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MagicLoading } from "../components/MagicLoading";
 import { useSession } from "../hooks/useSession";
-import {
-  checkLambdaHealth,
-  setApiBaseUrl,
-} from "../services/api/endpoints";
+import { checkLambdaHealth, setApiBaseUrl } from "../services/api/endpoints";
 
 /**
  * 首頁：保留原本的三欄報紙排版
@@ -25,11 +22,19 @@ export const HomePage: React.FC = () => {
   const [apiGatewayUrl, setApiGatewayUrl] = useState(() => {
     // 優先從 sessionStorage 讀取，否則用環境變數或預設值
     const stored = sessionStorage.getItem("__home_api_url__");
-    return stored ?? (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? `${window.location.origin}/api`;
+    return (
+      stored ??
+      (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
+      `${window.location.origin}/api`
+    );
   });
   const [knowledgeBaseId, setKnowledgeBaseId] = useState(() => {
     const stored = sessionStorage.getItem("__home_kb_id__");
-    return stored ?? (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ?? "";
+    return (
+      stored ??
+      (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ??
+      ""
+    );
   });
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [shouldNavigate, setShouldNavigate] = useState(false);
@@ -208,7 +213,7 @@ export const HomePage: React.FC = () => {
       </header>
 
       {/* 主要版面 - 三欄報紙布局 */}
-      <div className="flex-1 p-4 ">
+      <div className="flex-1 p-2 ">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 左欄：魔法照片 */}
           <div className="prophet-article">
@@ -308,7 +313,11 @@ export const HomePage: React.FC = () => {
                 disabled={loading}
                 className="w-full prophet-button py-3 px-6 disabled:opacity-50"
               >
-                {loading ? <MagicLoading text="正在準備您的魔法人生..." variant="wand" /> : "開始人生模擬"}
+                {loading ? (
+                  <MagicLoading text="正在準備您的魔法人生..." variant="wand" />
+                ) : (
+                  "開始人生模擬"
+                )}
               </button>
             </form>
           </div>

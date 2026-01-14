@@ -136,7 +136,7 @@ export const SummaryPage: React.FC = () => {
         </h1>
         <div className="prophet-dateline">★ 人生總結特刊 ★</div>
       </header>
-      <div className="p-6">
+      <div className="p-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="prophet-article">
             <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
