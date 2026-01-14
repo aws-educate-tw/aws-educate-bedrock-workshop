@@ -10,6 +10,7 @@ import React, {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Base64Image } from "../components/Base64Image";
 import { CharacterCard } from "../components/CharacterCard";
+import { MagicLoading } from "../components/MagicLoading";
 import { useGameFlow } from "../hooks/useGameFlow";
 import {
   ApiError,
@@ -399,7 +400,7 @@ export const GamePage: React.FC = () => {
                         onTick={scrollEventToBottomIfNeeded}
                       />
                     ) : (
-                      "正在處理結果..."
+                      <MagicLoading text="正在處理結果..." variant="stars" />
                     )}
                   </div>
 
@@ -420,7 +421,7 @@ export const GamePage: React.FC = () => {
                             disabled={preloadingResult}
                           >
                             {preloadingResult ? (
-                              <>正在生成人生結局...</>
+                              <MagicLoading text="正在生成人生結局..." />
                             ) : (
                               <>
                                 <span>查看結果</span>
@@ -436,7 +437,7 @@ export const GamePage: React.FC = () => {
                             disabled={preloading}
                           >
                             {preloading ? (
-                              <>正在準備下一個故事...</>
+                              <MagicLoading text="正在準備下一個故事..." />
                             ) : (
                               <>
                                 <span>繼續下一個故事</span>
@@ -477,7 +478,7 @@ export const GamePage: React.FC = () => {
                         onTick={scrollEventToBottomIfNeeded}
                       />
                     ) : loadingEvent ? (
-                      "正在載入事件..."
+                      <MagicLoading text="正在載入事件..." variant="stars" />
                     ) : (
                       "尚未取得事件，請稍後或返回首頁"
                     )}
@@ -565,8 +566,8 @@ export const GamePage: React.FC = () => {
                   </div>
 
                   {(loadingEvent || submitting) && (
-                    <div className="text-center prophet-text opacity-70">
-                      {submitting ? "正在處理您的選擇..." : "正在載入事件..."}
+                    <div className="text-center">
+                      <MagicLoading text={submitting ? "正在處理您的選擇..." : "正在載入事件..."} variant="stars" />
                     </div>
                   )}
                 </>
