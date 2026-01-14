@@ -159,7 +159,7 @@ export const HomePage: React.FC = () => {
       }}
     >
       {/* 預言家日報頭版 */}
-      <header className="text-center py-8 border-b-4 border-[var(--prophet-border)]">
+      <header className="text-center py-4 border-b-4 border-[var(--prophet-border)]">
         <div className="mb-4">
           <div className="flex items-center justify-center gap-4 mb-2">
             <div className="text-xs prophet-text tracking-widest">

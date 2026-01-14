@@ -166,11 +166,11 @@ export const SummaryPage: React.FC = () => {
           </div>
 
           <div className="prophet-article">
-            <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
+            <h2 className="prophet-headline text-2xl mb-2 border-b-2 border-[var(--prophet-border)] pb-2">
               人生五維分析
             </h2>
 
-            <div className="mb-6">
+            <div className="mb-1">
               <RadarChartComponent data={summaryState.radar} hideScale={true} />
             </div>
 
