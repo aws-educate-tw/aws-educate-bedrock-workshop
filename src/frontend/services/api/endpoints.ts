@@ -56,7 +56,7 @@ export async function generateBackground(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(req),
-      timeout: 120000,
+      timeout: 300000,
       retries: 2,
     }
   );
