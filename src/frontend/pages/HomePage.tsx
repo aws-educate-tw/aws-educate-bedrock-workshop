@@ -31,7 +31,6 @@ export const HomePage: React.FC = () => {
     const stored = sessionStorage.getItem("__home_kb_id__");
     return stored ?? (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ?? "";
   });
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [shouldNavigate, setShouldNavigate] = useState(false);
   const enableEscNav =
     (import.meta.env.VITE_ENABLE_ESC_NAV as string | undefined) === "true";
@@ -123,12 +122,10 @@ export const HomePage: React.FC = () => {
       (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ||
       "default-kb";
 
-    setStatusMessage(null);
     setShouldNavigate(false);
 
     try {
       await initializeSession(kbId, apiUrl);
-      setStatusMessage("魔法背景生成完成，正在前往冒險...");
       setShouldNavigate(true);
     } catch (err) {
       console.error("Failed to initialize session:", err);
@@ -276,14 +273,6 @@ export const HomePage: React.FC = () => {
                   disabled={loading}
                 />
               </div>
-
-              {statusMessage && (
-                <div className="border border-[var(--prophet-border)] bg-emerald-50 p-3">
-                  <p className="prophet-text text-emerald-800 text-sm">
-                    {statusMessage}
-                  </p>
-                </div>
-              )}
 
               {error && (
                 <div className="border-2 border-red-800 bg-red-50 p-3">
