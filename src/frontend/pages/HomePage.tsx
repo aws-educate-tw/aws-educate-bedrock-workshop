@@ -154,9 +154,9 @@ export const HomePage: React.FC = () => {
       }}
     >
       {/* 預言家日報頭版 */}
-      <header className="text-center py-8 border-b-4 border-[var(--prophet-border)]">
-        <div className="mb-4">
-          <div className="flex items-center justify-center gap-4 mb-2">
+      <header className="text-center py-4 border-b-4 border-[var(--prophet-border)]">
+        <div className="mb-2">
+          <div className="flex items-center justify-center gap-4 mb-1">
             <div className="text-xs prophet-text tracking-widest">
               Vol. CDXII
             </div>
@@ -167,7 +167,7 @@ export const HomePage: React.FC = () => {
           </div>
 
           {/* 動畫標題 */}
-          <div className="prophet-masthead mb-2">
+          <div className="prophet-masthead mb-1" style={{ fontSize: "3.3rem" }}>
             {titleAnimated ? (
               "THE DAILY PROPHET".split("").map((char, index) => (
                 <motion.span
@@ -195,20 +195,21 @@ export const HomePage: React.FC = () => {
             )}
           </div>
 
-          <div className="prophet-dateline mb-4">
+          <div className="prophet-dateline mb-2 text-xs">
             ★ THE WIZARD WORLD'S BEGUILING BROADSHEET OF CHOICE ★
           </div>
         </div>
 
         <div className="flex items-center justify-center gap-4">
           <div className="h-px bg-[var(--prophet-accent)] flex-1 max-w-32"></div>
-          <span className="prophet-subtitle text-lg">魔法人生模擬特刊</span>
+          <span className="prophet-subtitle text-base">魔法人生模擬特刊</span>
           <div className="h-px bg-[var(--prophet-accent)] flex-1 max-w-32"></div>
         </div>
       </header>
 
       {/* 主要版面 - 三欄報紙布局 */}
-      <div className="flex-1 p-4 ">
+      <div className="prophet-scroll">
+        <div className="p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 左欄：魔法照片 */}
           <div className="prophet-article">
@@ -341,14 +342,8 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* 報紙頁腳 */}
-      <footer className="border-t-2 border-[var(--prophet-border)] py-4 text-center bg-transparent">
-        <div className="prophet-small-text opacity-60">
-          © 2026 AWS Educate - Bedrock Workshop | The Daily Prophet
         </div>
-      </footer>
+      </div>
     </div>
   );
 };
