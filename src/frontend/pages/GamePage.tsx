@@ -31,9 +31,10 @@ const Typewriter: React.FC<{
   onComplete?: () => void;
   onTick?: () => void;
 }> = ({ text, speed = 40, onComplete, onTick }) => {
-  const [displayedText, setDisplayedText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
   const onCompleteRef = useRef(onComplete);
   const onTickRef = useRef(onTick);
+  const charsRef = useRef<string[]>([]);
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -43,26 +44,39 @@ const Typewriter: React.FC<{
     onTickRef.current = onTick;
   }, [onTick]);
 
+  // 當 text 改變時，重置索引並準備字符數組
   useEffect(() => {
-    setDisplayedText("");
-    if (!text) return;
+    if (!text) {
+      charsRef.current = [];
+      setCurrentIndex(0);
+      return;
+    }
 
-    let i = 0;
-    const timer = window.setInterval(() => {
-      setDisplayedText((prev) => prev + text.charAt(i));
+    // 將文字轉換為字符數組，正確處理 Unicode 字符（包括 emoji）
+    charsRef.current = Array.from(text);
+    setCurrentIndex(0);
+  }, [text]);
 
-      // 每次吐字通知外部（外部可以做 autoscroll）
-      onTickRef.current?.();
+  // 控制打字機效果
+  useEffect(() => {
+    if (!text || charsRef.current.length === 0) return;
 
-      i++;
-      if (i >= text.length) {
-        window.clearInterval(timer);
-        onCompleteRef.current?.();
-      }
+    if (currentIndex >= charsRef.current.length) {
+      onCompleteRef.current?.();
+      return;
+    }
+
+    onTickRef.current?.();
+
+    const timer = setTimeout(() => {
+      setCurrentIndex((prev) => prev + 1);
     }, speed);
 
-    return () => window.clearInterval(timer);
-  }, [text, speed]);
+    return () => clearTimeout(timer);
+  }, [text, currentIndex, speed]);
+
+  // 計算要顯示的文字
+  const displayedText = charsRef.current.slice(0, currentIndex + 1).join("");
 
   return <span>{displayedText}</span>;
 };
