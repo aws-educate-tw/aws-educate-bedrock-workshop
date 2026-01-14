@@ -252,7 +252,7 @@ export const HomePage: React.FC = () => {
                     setApiGatewayUrl(e.target.value);
                     sessionStorage.setItem("__home_api_url__", e.target.value);
                   }}
-                  disabled={loading}
+                  disabled={loading || shouldNavigate}
                 />
               </div>
 
@@ -270,7 +270,7 @@ export const HomePage: React.FC = () => {
                     setKnowledgeBaseId(e.target.value);
                     sessionStorage.setItem("__home_kb_id__", e.target.value);
                   }}
-                  disabled={loading}
+                  disabled={loading || shouldNavigate}
                 />
               </div>
 
@@ -295,10 +295,10 @@ export const HomePage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full prophet-button py-3 px-6 disabled:opacity-50"
+                disabled={loading || shouldNavigate}
+                className="w-full prophet-button py-3 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? <MagicLoading text="正在準備您的魔法人生..." variant="wand" /> : "開始人生模擬"}
+                {loading || shouldNavigate ? <MagicLoading text="正在準備您的魔法人生..." variant="wand" /> : "開始人生模擬"}
               </button>
             </form>
           </div>
