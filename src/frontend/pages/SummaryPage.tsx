@@ -118,8 +118,8 @@ export const SummaryPage: React.FC = () => {
         backgroundAttachment: "fixed",
       }}
     >
-      <header className="text-center py-4 border-b-2 border-[var(--prophet-border)]">
-        <h1 className="prophet-title text-2xl mb-2">
+      <header className="text-center py-3 border-b-2 border-[var(--prophet-border)]">
+        <h1 className="prophet-title text-xl mb-1">
           {"THE DAILY PROPHET".split("").map((char, index) => (
             <span
               key={index}
@@ -134,30 +134,31 @@ export const SummaryPage: React.FC = () => {
             </span>
           ))}
         </h1>
-        <div className="prophet-dateline">★ 人生總結特刊 ★</div>
+        <div className="prophet-dateline text-xs">★ 人生總結特刊 ★</div>
       </header>
-      <div className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="prophet-scroll">
+        <div className="p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="prophet-article">
-            <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
+            <h2 className="prophet-headline text-xl mb-3 border-b-2 border-[var(--prophet-border)] pb-2">
               人生總結
             </h2>
 
-            <div className="prophet-text leading-relaxed space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
+            <div className="prophet-text leading-relaxed space-y-3 text-sm">
               {summaryState.finalSummaryText.split("。").map(
                 (sentence, index) =>
                   sentence.trim() && (
-                    <p key={index} className="mb-4 text-justify">
+                    <p key={index} className="mb-3 text-justify">
                       {sentence.trim()}。
                     </p>
                   )
               )}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-[var(--prophet-border)]">
+            <div className="mt-4 pt-3 border-t border-[var(--prophet-border)]">
               <button
                 onClick={() => navigate("/achievement")}
-                className="w-full prophet-button py-3 px-6 flex items-center justify-center gap-3"
+                className="w-full prophet-button py-2 px-4 flex items-center justify-center gap-3 text-sm"
               >
                 <span>查看完整人生成就報告</span>
                 <ChevronRight size={20} />
@@ -166,28 +167,29 @@ export const SummaryPage: React.FC = () => {
           </div>
 
           <div className="prophet-article">
-            <h2 className="prophet-headline text-2xl mb-4 border-b-2 border-[var(--prophet-border)] pb-2">
+            <h2 className="prophet-headline text-xl mb-3 border-b-2 border-[var(--prophet-border)] pb-2">
               人生五維分析
             </h2>
 
-            <div className="mb-6">
+            <div className="mb-4">
               <RadarChartComponent data={summaryState.radar} hideScale={true} />
             </div>
 
-            <div className="text-center space-y-4">
-              <div className="text-5xl font-black text-[var(--prophet-dark)] mb-2 prophet-title">
+            <div className="text-center space-y-3">
+              <div className="text-4xl font-black text-[var(--prophet-dark)] mb-1 prophet-title">
                 {summaryState.lifeScore}
               </div>
-              <div className="prophet-text font-medium">人生分數 / 100</div>
+              <div className="prophet-text font-medium text-sm">人生分數 / 100</div>
 
               <div className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--prophet-border)]">
                 <div className="w-2 h-2 bg-[var(--prophet-accent)]"></div>
-                <span className="prophet-small-text font-semibold">
+                <span className="prophet-small-text font-semibold text-xs">
                   整體表現：{performance.level}
                 </span>
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

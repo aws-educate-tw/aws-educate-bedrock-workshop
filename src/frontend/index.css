@@ -1210,7 +1210,6 @@ body {
 
 .prophet-scroll {
   flex: 1;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  min-height: 0; /* 很重要：讓 flex 子元素可以真的縮、才會出現滾動 */
+  overflow-y: hidden;
+  min-height: 0;
 }
