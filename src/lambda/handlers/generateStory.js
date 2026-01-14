@@ -1,5 +1,5 @@
 const { createLLM, invokeWithRAG } = require("../services/llm");
-const { getSession, parseSessionState } = require("../services/session");
+const { getSession, parseSessionState, updateSessionWithLastEvent } = require("../services/session");
 const { storyPrompt } = require("../prompts/story");
 const { storySchema } = require("../schemas/story");
 const { generateImage, setCharacterAppearance } = require("../services/imageGenerator");
@@ -31,7 +31,15 @@ const generateStory = async (body) => {
         };
     }
 
-    const { knowledgeBaseId, storyContext, turn, phaseInfo, playerIdentity } = parseSessionState(sessionItem);
+    const {
+        knowledgeBaseId,
+        storyContext,
+        turn,
+        phaseInfo,
+        playerIdentity,
+        lastEventTurn,
+        lastEvent,
+    } = parseSessionState(sessionItem);
 
     // 設定此次請求使用的 Knowledge Base ID
     setKnowledgeBaseId(knowledgeBaseId);
@@ -48,6 +56,20 @@ const generateStory = async (body) => {
                 should_generate_result: true,
                 turn,
                 total_turns: TOTAL_TURNS,
+            }),
+        };
+    }
+
+    if (lastEventTurn === turn && lastEvent) {
+        return {
+            statusCode: 200,
+            body: JSON.stringify({
+                event_id: lastEvent.event_id,
+                event_description: lastEvent.event_description,
+                options: lastEvent.options,
+                image: null,
+                should_generate_result: lastEvent.should_generate_result,
+                game_progress: lastEvent.game_progress,
             }),
         };
     }
@@ -83,27 +105,55 @@ const generateStory = async (body) => {
         };
     }
 
+    const eventId = `${turn}-${storyPayload.event_id}`;
+    const shouldGenerateResult = phaseInfo.isLastTurn;
+
     // 生成事件圖片（使用 LLM 產生的英文 image_prompt）
-    const image = await generateImage(storyPayload.image_prompt || storyPayload.event_description);
+    const image = await generateImage(
+        storyPayload.image_prompt || storyPayload.event_description
+    );
+
+    const eventResponse = {
+        event_id: eventId,
+        event_description: storyPayload.event_description,
+        options: storyPayload.options,
+        image: image || null,
+        should_generate_result: shouldGenerateResult,
+        game_progress: {
+            turn: turn + 1,
+            total_turns: TOTAL_TURNS,
+            phase: phaseInfo.currentPhase.name,
+            phase_progress: phaseInfo.phaseProgressText,
+            turns_left: phaseInfo.totalTurnsLeft,
+        },
+    };
+
+    const eventCache = {
+        event_id: eventId,
+        event_description: storyPayload.event_description,
+        options: storyPayload.options,
+        should_generate_result: shouldGenerateResult,
+        game_progress: eventResponse.game_progress,
+    };
+
+    try {
+        await updateSessionWithLastEvent(body.session_id, sessionItem, {
+            lastEventTurn: turn,
+            lastEvent: eventCache,
+        });
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: "Failed to cache story event",
+                error: error.message,
+            }),
+        };
+    }
 
     return {
         statusCode: 200,
-        body: JSON.stringify({
-            event_id: storyPayload.event_id,
-            event_description: storyPayload.event_description,
-            options: storyPayload.options,
-            image: image || null,
-            // 當這是最後一回合時，告訴前端選擇後要生成結局
-            should_generate_result: phaseInfo.isLastTurn,
-            // 回傳遊戲進度資訊
-            game_progress: {
-                turn: turn + 1,
-                total_turns: TOTAL_TURNS,
-                phase: phaseInfo.currentPhase.name,
-                phase_progress: phaseInfo.phaseProgressText,
-                turns_left: phaseInfo.totalTurnsLeft,
-            },
-        }),
+        body: JSON.stringify(eventResponse),
     };
 };
 
