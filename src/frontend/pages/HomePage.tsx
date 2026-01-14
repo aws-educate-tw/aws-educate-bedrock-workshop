@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MagicLoading } from "../components/MagicLoading";
 import { useSession } from "../hooks/useSession";
 import {
   checkLambdaHealth,
@@ -30,7 +31,6 @@ export const HomePage: React.FC = () => {
     const stored = sessionStorage.getItem("__home_kb_id__");
     return stored ?? (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ?? "";
   });
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [shouldNavigate, setShouldNavigate] = useState(false);
   const enableEscNav =
     (import.meta.env.VITE_ENABLE_ESC_NAV as string | undefined) === "true";
@@ -122,12 +122,10 @@ export const HomePage: React.FC = () => {
       (import.meta.env.VITE_KNOWLEDGE_BASE_ID as string | undefined) ||
       "default-kb";
 
-    setStatusMessage(null);
     setShouldNavigate(false);
 
     try {
       await initializeSession(kbId, apiUrl);
-      setStatusMessage("魔法背景生成完成，正在前往冒險...");
       setShouldNavigate(true);
     } catch (err) {
       console.error("Failed to initialize session:", err);
@@ -153,9 +151,9 @@ export const HomePage: React.FC = () => {
       }}
     >
       {/* 預言家日報頭版 */}
-      <header className="text-center py-8 border-b-4 border-[var(--prophet-border)]">
-        <div className="mb-4">
-          <div className="flex items-center justify-center gap-4 mb-2">
+      <header className="text-center py-4 border-b-4 border-[var(--prophet-border)]">
+        <div className="mb-2">
+          <div className="flex items-center justify-center gap-4 mb-1">
             <div className="text-xs prophet-text tracking-widest">
               Vol. CDXII
             </div>
@@ -166,7 +164,7 @@ export const HomePage: React.FC = () => {
           </div>
 
           {/* 動畫標題 */}
-          <div className="prophet-masthead mb-2">
+          <div className="prophet-masthead mb-1" style={{ fontSize: "4rem" }}>
             {titleAnimated ? (
               "THE DAILY PROPHET".split("").map((char, index) => (
                 <motion.span
@@ -194,31 +192,32 @@ export const HomePage: React.FC = () => {
             )}
           </div>
 
-          <div className="prophet-dateline mb-4">
+          <div className="prophet-dateline mb-2 text-xs">
             ★ THE WIZARD WORLD'S BEGUILING BROADSHEET OF CHOICE ★
           </div>
         </div>
 
         <div className="flex items-center justify-center gap-4">
           <div className="h-px bg-[var(--prophet-accent)] flex-1 max-w-32"></div>
-          <span className="prophet-subtitle text-lg">魔法人生模擬特刊</span>
+          <span className="prophet-subtitle text-base">魔法人生模擬特刊</span>
           <div className="h-px bg-[var(--prophet-accent)] flex-1 max-w-32"></div>
         </div>
       </header>
 
       {/* 主要版面 - 三欄報紙布局 */}
-      <div className="flex-1 p-4 ">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="prophet-scroll">
+        <div className="p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
           {/* 左欄：魔法照片 */}
           <div className="prophet-article">
             <h3 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2">
               AWS Educate 魔法學院
             </h3>
-            <div className="prophet-photo mb-4 group cursor-pointer">
+            <div className="prophet-photo group cursor-pointer">
               <motion.img
                 src="https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/home_nufsc7.png"
                 alt="魔法城堡"
-                className="w-full h-64 object-cover transition-all duration-500"
+                className="w-full h-60 object-cover transition-all duration-500"
                 whileHover={{
                   rotateY: [-5, 5, -5, 5, 0],
                   transition: { duration: 0.6, ease: "easeInOut" },
@@ -253,7 +252,7 @@ export const HomePage: React.FC = () => {
                     setApiGatewayUrl(e.target.value);
                     sessionStorage.setItem("__home_api_url__", e.target.value);
                   }}
-                  disabled={loading}
+                  disabled={loading || shouldNavigate}
                 />
               </div>
 
@@ -271,17 +270,9 @@ export const HomePage: React.FC = () => {
                     setKnowledgeBaseId(e.target.value);
                     sessionStorage.setItem("__home_kb_id__", e.target.value);
                   }}
-                  disabled={loading}
+                  disabled={loading || shouldNavigate}
                 />
               </div>
-
-              {statusMessage && (
-                <div className="border border-[var(--prophet-border)] bg-emerald-50 p-3">
-                  <p className="prophet-text text-emerald-800 text-sm">
-                    {statusMessage}
-                  </p>
-                </div>
-              )}
 
               {error && (
                 <div className="border-2 border-red-800 bg-red-50 p-3">
@@ -304,10 +295,10 @@ export const HomePage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full prophet-button py-3 px-6 disabled:opacity-50"
+                disabled={loading || shouldNavigate}
+                className="w-full prophet-button py-3 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "正在準備您的魔法人生..." : "開始人生模擬"}
+                {loading || shouldNavigate ? <MagicLoading text="正在準備您的魔法人生..." variant="wand" /> : "開始人生模擬"}
               </button>
             </form>
           </div>
@@ -340,14 +331,8 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* 報紙頁腳 */}
-      <footer className="border-t-2 border-[var(--prophet-border)] py-4 text-center bg-transparent">
-        <div className="prophet-small-text opacity-60">
-          © 2026 AWS Educate - Bedrock Workshop | The Daily Prophet
         </div>
-      </footer>
+      </div>
     </div>
   );
 };

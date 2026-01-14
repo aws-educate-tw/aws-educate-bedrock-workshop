@@ -31,7 +31,15 @@ const resolveEvent = async (body) => {
         };
     }
 
-    const { knowledgeBaseId, currentSummary, lifeGoal, playerState, playerIdentity, turn } = parseSessionState(sessionItem);
+    const {
+        knowledgeBaseId,
+        currentSummary,
+        lifeGoal,
+        playerState,
+        playerIdentity,
+        turn,
+        history,
+    } = parseSessionState(sessionItem);
 
     // 設定此次請求使用的 Knowledge Base ID
     setKnowledgeBaseId(knowledgeBaseId);
@@ -41,6 +49,36 @@ const resolveEvent = async (body) => {
 
     // 計算此回合角色的最低年齡
     const minimumAge = getMinimumAge(turn);
+
+    const existingHistoryItem = (history || []).find(
+        (item) => item?.event_id === body.event.event_id
+    );
+
+    const isRetryWithDifferentSelection =
+        Boolean(existingHistoryItem) &&
+        existingHistoryItem.selected_option !== body.selected_option;
+
+    if (existingHistoryItem && !isRetryWithDifferentSelection) {
+        const resolvedOutcome =
+            existingHistoryItem.event_outcome || existingHistoryItem.outcome_summary || "";
+        const resolvedState =
+            existingHistoryItem.updated_player_state || playerState || {};
+        const resolvedStatChanges = existingHistoryItem.stat_changes || [];
+        const resolvedSummary =
+            existingHistoryItem.current_summary || currentSummary || "";
+        const resolvedImage = null;
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({
+                event_outcome: resolvedOutcome,
+                updated_player_state: resolvedState,
+                stat_changes: resolvedStatChanges,
+                current_summary: resolvedSummary,
+                image: resolvedImage,
+            }),
+        };
+    }
 
     let resolvePayload;
     try {
@@ -67,12 +105,20 @@ const resolveEvent = async (body) => {
         };
     }
 
+    // 生成結果圖片（使用 LLM 產生的英文 image_prompt）
+    const image = await generateImage(resolvePayload.image_prompt || resolvePayload.event_outcome);
+
     const now = new Date();
     const historyItem = {
         event_id: body.event.event_id || `event_${Date.now()}`,
         event_description: body.event.event_description || "",
         selected_option: body.selected_option,
+        event_outcome: resolvePayload.event_outcome,
         outcome_summary: resolvePayload.event_outcome,
+        updated_player_state: resolvePayload.updated_player_state,
+        stat_changes: resolvePayload.stat_changes,
+        current_summary: resolvePayload.current_summary,
+        image: null,
         timestamp: now.toISOString(),
     };
 
@@ -83,6 +129,10 @@ const resolveEvent = async (body) => {
             updatedSummary: resolvePayload.current_summary,
             knowledgeBaseId,
             lifeGoal,
+            preserveTurn: isRetryWithDifferentSelection,
+            replaceEventId: isRetryWithDifferentSelection
+                ? existingHistoryItem.event_id
+                : null,
         });
     } catch (error) {
         return {
@@ -90,9 +140,6 @@ const resolveEvent = async (body) => {
             body: JSON.stringify({ message: "Failed to update session", error: error.message }),
         };
     }
-
-    // 生成結果圖片（使用 LLM 產生的英文 image_prompt）
-    const image = await generateImage(resolvePayload.image_prompt || resolvePayload.event_outcome);
 
     return {
         statusCode: 200,
