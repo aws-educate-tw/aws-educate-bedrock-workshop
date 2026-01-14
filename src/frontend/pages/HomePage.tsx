@@ -1,7 +1,11 @@
 import { motion } from "framer-motion";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../hooks/useSession";
+import {
+  checkLambdaHealth,
+  setApiBaseUrl,
+} from "../services/api/endpoints";
 
 /**
  * 首頁：保留原本的三欄報紙排版
@@ -30,6 +34,7 @@ export const HomePage: React.FC = () => {
   const [shouldNavigate, setShouldNavigate] = useState(false);
   const enableEscNav =
     (import.meta.env.VITE_ENABLE_ESC_NAV as string | undefined) === "true";
+  const hasWarmedLambda = useRef(false);
 
   // 使用 useCallback 穩定 navigate 函式引用，避免 useEffect 頻繁重新執行
   const handleEscNavigation = useCallback(() => {
@@ -51,6 +56,23 @@ export const HomePage: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (hasWarmedLambda.current) {
+      return;
+    }
+    hasWarmedLambda.current = true;
+
+    const apiUrl =
+      apiGatewayUrl.trim() ||
+      (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+      `${window.location.origin}/api`;
+
+    setApiBaseUrl(apiUrl);
+    checkLambdaHealth().catch(() => {
+      // Warm-up only; ignore errors to avoid blocking the UI.
+    });
+  }, [apiGatewayUrl]);
 
   /**
    * 成功初始化後自動導向 GamePage
