@@ -21,6 +21,7 @@ const getSession = async (sessionId) => {
         new GetItemCommand({
             TableName: tableName,
             Key: { session_id: { S: sessionId } },
+            ConsistentRead: true,
         })
     );
 
@@ -82,6 +83,8 @@ const createSession = async (sessionId, data) => {
                 current_summary: { S: "你剛發現自己擁有魔法天賦，即將踏入艾瑟里亞魔法世界的旅程。" },
                 turn: { N: "0" },
                 history: { L: [] },
+                last_event_turn: { N: "-1" },
+                last_event: { NULL: true },
                 final_result: { NULL: true },
                 created_at: { S: now.toISOString() },
                 updated_at: { S: now.toISOString() },
@@ -97,11 +100,25 @@ const updateSessionAfterEvent = async (sessionId, sessionItem, data) => {
     }
 
     const now = new Date();
-    const { historyItem, updatedPlayerState, updatedSummary, knowledgeBaseId, lifeGoal } = data;
+    const {
+        historyItem,
+        updatedPlayerState,
+        updatedSummary,
+        knowledgeBaseId,
+        lifeGoal,
+        preserveTurn = false,
+        replaceEventId = null,
+    } = data;
 
     const history = fromAttr(sessionItem.history) || [];
-    const updatedHistory = history.concat(historyItem);
-    const updatedTurn = getAttrNumber(sessionItem.turn) + 1;
+    const updatedHistory = replaceEventId
+        ? history.map((item) =>
+            item?.event_id === replaceEventId ? historyItem : item
+        )
+        : history.concat(historyItem);
+    const updatedTurn = preserveTurn
+        ? getAttrNumber(sessionItem.turn)
+        : getAttrNumber(sessionItem.turn) + 1;
 
     await dynamoClient.send(
         new PutItemCommand({
@@ -117,6 +134,8 @@ const updateSessionAfterEvent = async (sessionId, sessionItem, data) => {
                 current_summary: { S: updatedSummary },
                 turn: { N: String(updatedTurn) },
                 history: toAttr(updatedHistory),
+                last_event_turn: { N: "-1" },
+                last_event: { NULL: true },
                 final_result: toAttr(fromAttr(sessionItem.final_result)),
                 created_at: { S: getAttrString(sessionItem.created_at) || now.toISOString() },
                 updated_at: { S: now.toISOString() },
@@ -148,7 +167,42 @@ const updateSessionWithResult = async (sessionId, sessionItem, data) => {
                 current_summary: { S: finalResult.summary },
                 turn: toAttr(fromAttr(sessionItem.turn)),
                 history: toAttr(history),
+                last_event_turn: { N: "-1" },
+                last_event: { NULL: true },
                 final_result: toAttr(finalResult),
+                created_at: { S: getAttrString(sessionItem.created_at) || now.toISOString() },
+                updated_at: { S: now.toISOString() },
+                ttl: { N: String(getAttrNumber(sessionItem.ttl) || Math.floor(now.getTime() / 1000) + 24 * 60 * 60) },
+            },
+        })
+    );
+};
+
+const updateSessionWithLastEvent = async (sessionId, sessionItem, data) => {
+    if (!tableName) {
+        throw new Error("Missing DDB_TABLE_NAME");
+    }
+
+    const now = new Date();
+    const { lastEventTurn, lastEvent } = data;
+
+    await dynamoClient.send(
+        new PutItemCommand({
+            TableName: tableName,
+            Item: {
+                session_id: { S: sessionId },
+                status: { S: getAttrString(sessionItem.status) || "active" },
+                knowledge_base_id: toAttr(fromAttr(sessionItem.knowledge_base_id)),
+                world_context: toAttr(fromAttr(sessionItem.world_context) || {}),
+                player_identity: toAttr(fromAttr(sessionItem.player_identity) || {}),
+                life_goal: toAttr(fromAttr(sessionItem.life_goal)),
+                player_state: toAttr(fromAttr(sessionItem.player_state) || {}),
+                current_summary: toAttr(fromAttr(sessionItem.current_summary)),
+                turn: toAttr(fromAttr(sessionItem.turn)),
+                history: toAttr(fromAttr(sessionItem.history) || []),
+                last_event_turn: { N: String(lastEventTurn) },
+                last_event: toAttr(lastEvent),
+                final_result: toAttr(fromAttr(sessionItem.final_result)),
                 created_at: { S: getAttrString(sessionItem.created_at) || now.toISOString() },
                 updated_at: { S: now.toISOString() },
                 ttl: { N: String(getAttrNumber(sessionItem.ttl) || Math.floor(now.getTime() / 1000) + 24 * 60 * 60) },
@@ -162,6 +216,8 @@ const parseSessionState = (sessionItem) => {
     const playerIdentity = getAttrMap(sessionItem.player_identity);
     const turn = getAttrNumber(sessionItem.turn);
     const phaseInfo = getPhaseInfo(turn);
+    const lastEventTurn = getAttrNumber(sessionItem.last_event_turn);
+    const lastEvent = fromAttr(sessionItem.last_event);
 
     return {
         knowledgeBaseId: getAttrString(sessionItem.knowledge_base_id),
@@ -190,6 +246,8 @@ const parseSessionState = (sessionItem) => {
                 traits: getAttrList(playerState.traits).map((t) => getAttrString(t)),
             },
         },
+        lastEventTurn,
+        lastEvent,
     };
 };
 
@@ -198,5 +256,6 @@ module.exports = {
     createSession,
     updateSessionAfterEvent,
     updateSessionWithResult,
+    updateSessionWithLastEvent,
     parseSessionState,
 };
