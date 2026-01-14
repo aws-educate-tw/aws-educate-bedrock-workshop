@@ -135,6 +135,12 @@ export const HomePage: React.FC = () => {
     }
   };
 
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div
       className="prophet-page"
@@ -242,6 +248,7 @@ export const HomePage: React.FC = () => {
                   className="w-full prophet-input px-3 py-2 text-sm"
                   placeholder="例：https://api.example.com/api 或 http://localhost:3000"
                   value={apiGatewayUrl}
+                  onKeyDown={handleInputKeyDown}
                   onChange={(e) => {
                     setApiGatewayUrl(e.target.value);
                     sessionStorage.setItem("__home_api_url__", e.target.value);
@@ -259,6 +266,7 @@ export const HomePage: React.FC = () => {
                   className="w-full prophet-input px-3 py-2 text-sm"
                   placeholder="留空將使用預設值"
                   value={knowledgeBaseId}
+                  onKeyDown={handleInputKeyDown}
                   onChange={(e) => {
                     setKnowledgeBaseId(e.target.value);
                     sessionStorage.setItem("__home_kb_id__", e.target.value);

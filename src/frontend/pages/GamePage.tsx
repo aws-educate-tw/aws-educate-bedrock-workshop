@@ -530,10 +530,8 @@ export const GamePage: React.FC = () => {
                               className="flex-1 py-2 px-3 border border-[var(--prophet-border)] bg-[var(--prophet-paper)] prophet-text text-sm focus:outline-none focus:border-[var(--prophet-dark)]"
                               disabled={submitting || loadingEvent}
                               onKeyDown={(e) => {
-                                if (e.key === "Enter" && customChoice.trim()) {
+                                if (e.key === "Enter") {
                                   e.preventDefault();
-                                  handleSelectOption(customChoice.trim());
-                                  setCustomChoice("");
                                 }
                               }}
                             />
