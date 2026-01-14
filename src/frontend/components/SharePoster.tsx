@@ -55,7 +55,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({
           <Base64Image
             base64={finalImageUrl}
             alt="人生角色"
-            className="w-full h-[200px] object-cover"
+            className="w-full h-[275px] object-cover"
           />
         </div>
 
@@ -72,7 +72,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({
 
       {/* 下半部：雷達圖 */}
       <div className="px-4 pb-4 -mt-2">
-        <div className="w-full h-[270px]">
+        <div className="w-full h-[195px]">
           <RadarChartComponent data={radar} hideScale={true} />
         </div>
 
