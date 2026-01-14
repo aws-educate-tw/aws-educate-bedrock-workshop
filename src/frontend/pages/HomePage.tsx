@@ -167,7 +167,7 @@ export const HomePage: React.FC = () => {
           </div>
 
           {/* 動畫標題 */}
-          <div className="prophet-masthead mb-1" style={{ fontSize: "3.3rem" }}>
+          <div className="prophet-masthead mb-1" style={{ fontSize: "4rem" }}>
             {titleAnimated ? (
               "THE DAILY PROPHET".split("").map((char, index) => (
                 <motion.span
@@ -210,17 +210,17 @@ export const HomePage: React.FC = () => {
       {/* 主要版面 - 三欄報紙布局 */}
       <div className="prophet-scroll">
         <div className="p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
           {/* 左欄：魔法照片 */}
           <div className="prophet-article">
             <h3 className="prophet-headline text-lg mb-4 border-b border-[var(--prophet-border)] pb-2">
               AWS Educate 魔法學院
             </h3>
-            <div className="prophet-photo mb-4 group cursor-pointer">
+            <div className="prophet-photo group cursor-pointer">
               <motion.img
                 src="https://res.cloudinary.com/da3bvump4/image/upload/v1767353109/home_nufsc7.png"
                 alt="魔法城堡"
-                className="w-full h-64 object-cover transition-all duration-500"
+                className="w-full h-60 object-cover transition-all duration-500"
                 whileHover={{
                   rotateY: [-5, 5, -5, 5, 0],
                   transition: { duration: 0.6, ease: "easeInOut" },
