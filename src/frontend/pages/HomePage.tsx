@@ -308,7 +308,7 @@ export const HomePage: React.FC = () => {
                 disabled={loading}
                 className="w-full prophet-button py-3 px-6 disabled:opacity-50"
               >
-                {loading ? <MagicLoading text="正在準備您的魔法人生..." /> : "開始人生模擬"}
+                {loading ? <MagicLoading text="正在準備您的魔法人生..." variant="wand" /> : "開始人生模擬"}
               </button>
             </form>
           </div>

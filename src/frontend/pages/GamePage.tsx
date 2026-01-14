@@ -400,7 +400,7 @@ export const GamePage: React.FC = () => {
                         onTick={scrollEventToBottomIfNeeded}
                       />
                     ) : (
-                      <MagicLoading text="正在處理結果..." />
+                      <MagicLoading text="正在處理結果..." variant="stars" />
                     )}
                   </div>
 
@@ -478,7 +478,7 @@ export const GamePage: React.FC = () => {
                         onTick={scrollEventToBottomIfNeeded}
                       />
                     ) : loadingEvent ? (
-                      <MagicLoading text="正在載入事件..." />
+                      <MagicLoading text="正在載入事件..." variant="stars" />
                     ) : (
                       "尚未取得事件，請稍後或返回首頁"
                     )}
@@ -567,7 +567,7 @@ export const GamePage: React.FC = () => {
 
                   {(loadingEvent || submitting) && (
                     <div className="text-center">
-                      <MagicLoading text={submitting ? "正在處理您的選擇..." : "正在載入事件..."} />
+                      <MagicLoading text={submitting ? "正在處理您的選擇..." : "正在載入事件..."} variant="stars" />
                     </div>
                   )}
                 </>
