@@ -77,7 +77,6 @@ Resources:
           DDB_TABLE_NAME: !Ref GameSessionsTable
           KNOWLEDGE_BASE_ID: !Ref KnowledgeBaseId
       Policies:
-        - AWSLambdaBasicExecutionRole
         - DynamoDBCrudPolicy:
             TableName: !Ref GameSessionsTable
         - Version: "2012-10-17"
@@ -254,7 +253,6 @@ Resources:
   GameSessionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: GameSessions
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: session_id
