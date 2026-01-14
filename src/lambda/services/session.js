@@ -97,11 +97,25 @@ const updateSessionAfterEvent = async (sessionId, sessionItem, data) => {
     }
 
     const now = new Date();
-    const { historyItem, updatedPlayerState, updatedSummary, knowledgeBaseId, lifeGoal } = data;
+    const {
+        historyItem,
+        updatedPlayerState,
+        updatedSummary,
+        knowledgeBaseId,
+        lifeGoal,
+        preserveTurn = false,
+        replaceEventId = null,
+    } = data;
 
     const history = fromAttr(sessionItem.history) || [];
-    const updatedHistory = history.concat(historyItem);
-    const updatedTurn = getAttrNumber(sessionItem.turn) + 1;
+    const updatedHistory = replaceEventId
+        ? history.map((item) =>
+            item?.event_id === replaceEventId ? historyItem : item
+        )
+        : history.concat(historyItem);
+    const updatedTurn = preserveTurn
+        ? getAttrNumber(sessionItem.turn)
+        : getAttrNumber(sessionItem.turn) + 1;
 
     await dynamoClient.send(
         new PutItemCommand({
