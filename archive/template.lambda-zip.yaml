@@ -3,7 +3,8 @@
 
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: SAM Template for Lambda Response with Bedrock Model Integration
+Description: bedrock workshop stack
+
 
 Parameters:
   ArtifactsBucketName:
@@ -165,6 +166,11 @@ Resources:
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
+
+  BedrockMultimodelBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: bedrock-multimodel-bucket
 
   PosterBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -578,6 +584,9 @@ Outputs:
   PosterBucketName:
     Description: "S3 bucket for poster images"
     Value: !Ref PosterBucket
+  BedrockMultimodelBucketName:
+    Description: "S3 bucket for Bedrock multimodel assets"
+    Value: !Ref BedrockMultimodelBucket
   FrontendBucketName:
     Description: "S3 bucket name for the frontend"
     Value: !Ref FrontendBucket
