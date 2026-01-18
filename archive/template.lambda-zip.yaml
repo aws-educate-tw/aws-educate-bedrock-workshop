@@ -15,6 +15,10 @@ Parameters:
     Type: String
     Default: "us-east-1"
     Description: S3 region for the artifacts bucket
+  BedrockMultimodelBucketPrefix:
+    Type: String
+    Default: "bedrock-multimodel"
+    Description: "Prefix for Bedrock multimodel bucket name"
 
 Resources:
   # CloudWatch Log Group for API Gateway Access Logs
@@ -170,7 +174,7 @@ Resources:
   BedrockMultimodelBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: bedrock-multimodel-bucket
+      BucketName: !Sub "${BedrockMultimodelBucketPrefix}-${AWS::AccountId}-${AWS::Region}"
 
   PosterBucketPolicy:
     Type: AWS::S3::BucketPolicy
