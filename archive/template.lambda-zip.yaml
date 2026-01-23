@@ -15,10 +15,10 @@ Parameters:
     Type: String
     Default: "us-east-1"
     Description: S3 region for the artifacts bucket
-  BedrockMultimodelBucketPrefix:
+  BedrockMultimodalBucketPrefix:
     Type: String
-    Default: "bedrock-multimodel"
-    Description: "Prefix for Bedrock multimodel bucket name"
+    Default: "bedrock-multimodal"
+    Description: "Prefix for Bedrock multimodal bucket name"
 
 Resources:
   # CloudWatch Log Group for API Gateway Access Logs
@@ -171,10 +171,10 @@ Resources:
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
 
-  BedrockMultimodelBucket:
+  BedrockMultimodalBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${BedrockMultimodelBucketPrefix}-${AWS::AccountId}-${AWS::Region}"
+      BucketName: !Sub "${BedrockMultimodalBucketPrefix}-${AWS::AccountId}-${AWS::Region}"
 
   PosterBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -588,9 +588,9 @@ Outputs:
   PosterBucketName:
     Description: "S3 bucket for poster images"
     Value: !Ref PosterBucket
-  BedrockMultimodelBucketName:
-    Description: "S3 bucket for Bedrock multimodel assets"
-    Value: !Ref BedrockMultimodelBucket
+  BedrockMultimodalBucketName:
+    Description: "S3 bucket for Bedrock multimodal assets"
+    Value: !Ref BedrockMultimodalBucket
   FrontendBucketName:
     Description: "S3 bucket name for the frontend"
     Value: !Ref FrontendBucket
