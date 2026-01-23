@@ -56,7 +56,7 @@ export async function generateBackground(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(req),
-      timeout: 300000,
+      timeout: 600000,
       retries: 2,
     }
   );
@@ -77,7 +77,7 @@ export async function generateStory(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),
-    timeout: 120000,
+    timeout: 600000,
     retries: 2,
   });
 }
@@ -93,7 +93,7 @@ export async function resolveEvent(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),
-    timeout: 120000,
+    timeout: 600000,
     retries: 2,
   });
 }
@@ -111,7 +111,7 @@ export async function generateResult(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(req),
-      timeout: 120000,
+      timeout: 600000,
       retries: 2,
     }
   );
@@ -124,7 +124,7 @@ export async function generateResult(
 export async function checkDbHealth(): Promise<DbHealthResponse> {
   return fetchWithRetry<DbHealthResponse>(`${API_BASE_URL}/db-health`, {
     method: "GET",
-    timeout: 120000,
+    timeout: 600000,
     retries: 1,
   });
 }
@@ -136,7 +136,7 @@ export async function checkDbHealth(): Promise<DbHealthResponse> {
 export async function checkLambdaHealth(): Promise<LambdaHealthResponse> {
   return fetchWithRetry<LambdaHealthResponse>(`${API_BASE_URL}/lambda-health`, {
     method: "GET",
-    timeout: 120000,
+    timeout: 600000,
     retries: 1,
   });
 }
