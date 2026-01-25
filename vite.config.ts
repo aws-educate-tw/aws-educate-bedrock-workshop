@@ -4,6 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  publicDir: 'src/frontend/public',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src/frontend'),
