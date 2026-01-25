@@ -11,6 +11,9 @@
 
 ![life-report-95 (1)](https://github.com/user-attachments/assets/db4f3c9b-56ed-44ab-a236-365446012519)
 
+### 架構圖
+<img width="682" height="457" alt="%E6%88%AA%E5%9C%96%202026-01-18%20%E4%B8%AD%E5%8D%8812 16 03" src="https://github.com/user-attachments/assets/3f3eec17-e051-4fdf-9430-d91567bd4044" />
+
 ---
 
 # 二、API 文件
