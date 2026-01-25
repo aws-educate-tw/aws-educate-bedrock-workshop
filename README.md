@@ -6,6 +6,11 @@
 系統於遊戲開始時建立一組 **session_id**，並將該局遊戲的基本狀態與隨機環境設定儲存於 **DynamoDB** 中。
 後續所有 API 呼叫皆透過 `session_id` 識別同一局人生模擬流程。
 
+### 遊戲頁面
+<img width="1440" height="900" alt="%E6%88%AA%E5%9C%96%202026-01-08%20%E4%B8%8B%E5%8D%883 34 20拷貝" src="https://github.com/user-attachments/assets/d2b49f40-1d3b-4de0-bae6-4ce0d2f44bba" />
+
+![life-report-95 (1)](https://github.com/user-attachments/assets/db4f3c9b-56ed-44ab-a236-365446012519)
+
 ---
 
 # 二、API 文件
