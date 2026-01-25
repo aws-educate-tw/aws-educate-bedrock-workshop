@@ -20,7 +20,52 @@ API 文件已移至 Lambda 目錄：`src/lambda/API.md`。
 
 ---
 
-# 四、開發版（SAM Local / SAM Deploy）
+# 四、共同前置步驟（兩種部署方式都需要）
+
+## 1) 建立公開 S3
+
+當你要讓他人透過網址讀取 S3 上的檔案（例如前端檔案或 zip），請檢查以下三點：
+
+### 步驟 1：關閉「封鎖公開存取」
+
+1. S3 Console -> 選擇你的 Bucket
+2. Permissions -> Block public access settings
+3. 關閉「Block all public access」並儲存
+
+### 步驟 2：設定 Bucket Policy（允許公開讀取）
+
+將 `<YOUR_BUCKET>` 改成你的 bucket 名稱：
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::<YOUR_BUCKET>/*"
+    }
+  ]
+}
+```
+
+### 步驟 3：檢查加密方式
+
+- SSE-S3（預設）可以公開讀取
+- SSE-KMS 會導致 AccessDenied（需要 `kms:Decrypt`）
+
+若是 SSE-KMS，請重新上傳並改用 SSE-S3。
+
+## 2) 上傳前端與 NPC
+
+```bash
+./scripts/deploy-frontend.sh <s3-bucket> <s3-prefix> [region]
+./scripts/deploy-archive.sh <s3-bucket> <s3-prefix> [region]
+```
+
+# 五、開發版（SAM Local / SAM Deploy）
 
 前置需求：已安裝 Docker 並啟動。
 
@@ -36,7 +81,50 @@ sam build -t src/template/template.yaml
 sam local start-api -t src/template/template.yaml --env-vars ./src/template/env.json
 ```
 
-## 3) 呼叫 API（範例）
+如果遇到 Docker 拉不到映像檔，可以先拉基底映像：
+
+```bash
+docker pull public.ecr.aws/lambda/nodejs:18-arm64
+```
+
+---
+
+# 六、CloudFormation 版（開發版）
+
+前置需求：已設定 AWS CLI/認證與 SAM CLI。
+
+## 1) 建置
+
+```bash
+sam build -t src/template/template.yaml
+```
+
+## 2) 上傳 Lambda
+
+```bash
+./scripts/package-lambda.sh <s3-bucket> <s3-key-prefix> [region]
+```
+
+## 3) 部署
+
+```bash
+sam deploy --guided
+```
+
+## 4) 取得 API URL
+
+部署完成後，在 CloudFormation Outputs 取得 `ApiBaseUrl`，
+或用以下指令查詢：
+
+```bash
+aws cloudformation describe-stacks \
+  --stack-name bedrock-workshop-stack \
+  --query "Stacks[0].Outputs"
+```
+
+# 七、呼叫 API（範例）
+
+本機：使用 `http://127.0.0.1:3000`。部署：請改用 CloudFormation 輸出的 `ApiBaseUrl`。
 
 ```bash
 curl -X POST http://127.0.0.1:3000/generate-background \
@@ -61,67 +149,3 @@ curl -X POST http://127.0.0.1:3000/generate-result \
   -H "Content-Type: application/json" \
   -d '{"session_id":"session_abc123"}'
 ```
-
-如果遇到 Docker 拉不到映像檔，可以先拉基底映像：
-
-```bash
-docker pull public.ecr.aws/lambda/nodejs:18-arm64
-```
-
----
-
-# 五、部署到 AWS（開發版）
-
-前置需求：已設定 AWS CLI/認證與 SAM CLI。
-
-## 1) 建置
-
-```bash
-sam build -t src/template/template.yaml
-```
-
-## 2) 部署
-
-```bash
-sam deploy --guided
-```
-
-## 3) 取得 API URL
-
-部署完成後，在 CloudFormation Outputs 取得 `ApiBaseUrl`，
-或用以下指令查詢：
-
-```bash
-aws cloudformation describe-stacks \
-  --stack-name bedrock-workshop-stack \
-  --query "Stacks[0].Outputs"
-```
-
----
-
-# 六、Workshop 版（ZIP + S3 + Infrastructure Composer）
-
-Workshop 版會先把 Lambda 打包成 zip 上傳到 S3，並在模板裡直接指定 `CodeUri`，方便參加者匯入 Infrastructure Composer 直接建立自己的專案。
-上傳與公開流程請見 `README.workshop-deploy.md`。
-
-## 2) 更新模板中的 CodeUri
-
-打包完成後，請更新 `archive/template.lambda-zip.yaml` 的 `CodeUri`：
-
-```yaml
-CodeUri: s3://workshop-demo-artifacts/lambda/lambda.zip
-```
-
-## 3) 部署（或匯入 Infrastructure Composer）
-
-```bash
-aws cloudformation deploy \
-  --template-file archive/template.lambda-zip.yaml \
-  --stack-name workshop-demo \
-  --region us-east-1 \
-  --capabilities CAPABILITY_IAM
-```
-
-## 4) 上傳前端到 S3（打包成 zip）
-
-請見 `README.workshop-deploy.md`。
